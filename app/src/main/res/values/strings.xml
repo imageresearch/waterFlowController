@@ -1,0 +1,24 @@
+<resources>
+    <string name="app_name">waterFlowController</string>
+    <string name="noname">이름 없음(알 수 없는 장치)</string>
+    <string name="ble_connected">블루투스 장치와 연결이 되었습니다.</string>
+    <string name="available_device">연결 가능한 BLE 장치</string>
+    <string name="ble_not_supporting">장치가 BLE를 지원하지 않습니다.</string>
+    <string name="ble_not_connected">블루투스 장치와 연결이 되지 않았습니다.</string>
+
+    <string name="expectation_date_string">필터 교환 예상 날짜는</string>
+    <string name="unix_year">년</string>
+    <string name="unix_month">월</string>
+    <string name="two_digit_string">  </string>
+    <string name="unix_day">일</string>
+    <string name="finish_word">입니다.</string>
+    <string name="used_days">사용 일수 </string>
+    <string name="left_days">잔여 일수</string>
+    <string name="used_litters">사용 유량</string>
+    <string name="left_litters">잔여 유량</string>
+    <string name="litter">리터</string>
+    <string name="months">개월</string>
+    <string name="days">일</string>
+    <string name="OK">예</string>
+    <string name="CANCEL">아니오</string>
+</resources>
