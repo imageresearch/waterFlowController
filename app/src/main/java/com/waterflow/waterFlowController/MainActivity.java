@@ -1,6 +1,7 @@
 package com.waterflow.waterFlowController;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -43,9 +44,17 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 
 import java.text.SimpleDateFormat;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.Period;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
@@ -354,18 +363,6 @@ public class MainActivity extends AppCompatActivity {
                                     // activate BLE
     }
 
-    /***************************************************************************
-     *
-     * @param days
-     * @return
-     */
-    private int getElapsedMonth(long days){
-        return (int)(days / 30);
-    }
-
-    private int getElapsedDay(long days){
-        return (int)(days % 30);
-    }
 
     private long getElapsedDays(long elapsed_time_stamp){
         return TimeUnit.MILLISECONDS.toDays(elapsed_time_stamp);
@@ -376,29 +373,25 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /***************************************************************************
-     * Get the unix time stamp from bytes
-     *
-     * the lower-indexed byte is converted into LSB and
-     * the higher-indexed byte is converted into MSB
-     *
-     * @param time_bytes
+     * Warning
+     *  The parameter of timestamp should be in milli-seconds
+     * @param timestamp
      * @return
      **************************************************************************/
-    private long convertBytesToUnixTimeStamp(byte[] time_bytes){
-        return (time_bytes[0]) |
-               (time_bytes[1] << 8) |
-               (time_bytes[2] << 16) |
-               (time_bytes[3] << 24);
+    private Date convertTimestampToDate(long timestamp){
+        return new Date(timestamp * 1000);
     }
 
-    /***************************************************************************
-     * Convert the byte arrays into short
-     *
-     * @param bytes
-     * @return
-     **************************************************************************/
-    private int convertBytesToShort(byte[] bytes){
-        return (bytes[0] | (bytes[1] << 8)) & 0xFFFF;
+
+    private long convertBytesToLong (byte[] bytes){
+        long returnValue = 0;
+        if (bytes != null) {
+            for (int count = 0; count < bytes.length; count++)
+                returnValue += (bytes[count] & 0xFF) << (8 * count);
+        }
+
+        return returnValue;
+
     }
 
     /***************************************************************************
@@ -409,6 +402,82 @@ public class MainActivity extends AppCompatActivity {
     private long getCurrentUnixTimeStamp(){
         long temp_time_stamp = System.currentTimeMillis() / 1000L;
         return temp_time_stamp;
+    }
+
+    private Date getCurrentDate(){
+        Date c = Calendar.getInstance().getTime();
+        return c;
+    }
+
+
+    private Duration getDateDifference(Date deviceDate, Date mobileDate){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            return Duration.between(mobileDate.toInstant(), deviceDate.toInstant());
+        }
+        return null;
+    }
+
+    private LocalDate convertToLocalDate(Date dateToConvert){
+        return dateToConvert.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private int getElapsedDays(Date deviceDate, Date mobileDate, int type){
+/*
+        Calendar deviceCalendar = new GregorianCalendar();
+        Calendar mobileCalendar = new GregorianCalendar();
+        deviceCalendar.setTime(deviceDate);
+        mobileCalendar.setTime(mobileDate);
+
+        int returnValue  = 0;
+
+        switch (type){
+            case 0 :
+                returnValue = mobileCalendar.get(Calendar.DAY_OF_MONTH) - deviceCalendar.get(Calendar.DAY_OF_MONTH);
+                break;
+            case 1 :
+                returnValue = mobileCalendar.get(Calendar.MONTH) - deviceCalendar.get(Calendar.MONTH);
+                break;
+            default :
+                break;
+        }
+        return returnValue;
+*/
+        int returnVal = 0;
+        Period period;
+/*
+
+        DateTimeFormatter formatter = null;
+        formatter = DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss O yyyy");
+
+        String deviceDateString = deviceDate.toString();
+        String mobileDateString = mobileDate.toString();
+
+        ZoneOffset zoneOffset = null;
+        zoneOffset = ZoneOffset.ofHours(6);
+
+        OffsetDateTime deviceOffset = null;
+        deviceOffset = OffsetDateTime.parse(deviceDateString, formatter).withOffsetSameLocal(zoneOffset);
+
+        OffsetDateTime mobileOffset = null;
+        mobileOffset = OffsetDateTime.parse(mobileDateString, formatter).withOffsetSameLocal(zoneOffset);
+*/
+
+        period = Period.between(
+                    convertToLocalDate(deviceDate),
+                    convertToLocalDate(mobileDate)
+                    );
+
+        switch(type){
+            case 0 :
+            default :
+                returnVal = period.getDays();
+                break;
+            case 1 :
+                returnVal = period.getMonths();
+                break;
+        }
+        return returnVal;
     }
 
     /***************************************************************************
@@ -468,25 +537,40 @@ public class MainActivity extends AppCompatActivity {
                     byte[] filter_capacity,
                     byte[] accumulated_flow) {
 
-        int filter_capacity_int = convertBytesToShort(filter_capacity); // fixed to 50000
-        int accumulated_flow_int = convertBytesToShort(accumulated_flow);
+        int filter_capacity_int = (int)convertBytesToLong(filter_capacity); // fixed to 50000
+        int accumulated_flow_int = (int)convertBytesToLong(accumulated_flow);
         int left_flow_int = filter_capacity_int - accumulated_flow_int;
-        long filter_update_unix_time_stamp = convertBytesToUnixTimeStamp(filter_update_date);
-        long elapsed_time_stamp = getElapsedTimeStamp(filter_update_unix_time_stamp);
-        long elapsed_days = getElapsedDays(elapsed_time_stamp);
-        int elapsed_month = getElapsedMonth(elapsed_days);
-        int elapsed_day = getElapsedDay(elapsed_days);
+        long filter_update_unix_time_stamp = convertBytesToLong(filter_update_date);
 
-        long left_days = left_flow_int / elapsed_days;
-        long left_months = getElapsedMonth(left_days);
-        long left_day = getElapsedDay(left_days);
+        Date filter_update_date_fmt = convertTimestampToDate(filter_update_unix_time_stamp);
+        Date current_date = getCurrentDate();
+
+        long elapsed_days = 0;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            elapsed_days = getElapsedDays(filter_update_date_fmt, current_date, 0);
+        }
+        long elapsed_months = 0;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            elapsed_months = getElapsedDays(filter_update_date_fmt, current_date, 1);
+        }
+
+        // To prevent the zero-dividing problem, we set the elapsed days to 1 if it is 0
+        long left_days = (left_flow_int <= 0)? 0: left_flow_int / ((elapsed_days == 0)? 1:elapsed_days);
+
+        Calendar cal = Calendar.getInstance(Locale.getDefault());
+        cal.add(Calendar.DATE, (int)left_days);
+        Date resultDate = new Date(cal.getTimeInMillis());
+
+        long left_months = 0;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            left_months = getElapsedDays(filter_update_date_fmt, resultDate, 1);
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            left_days = getElapsedDays(filter_update_date_fmt, resultDate, 0);
+        }
 
         String formatted_string = getResources().getString(R.string.expectation_date_string);
-        Calendar cal = Calendar.getInstance(Locale.getDefault());
-
         SimpleDateFormat s = new SimpleDateFormat(formatted_string, Locale.getDefault());
-
-        cal.add(Calendar.DAY_OF_YEAR, (int)left_days);
 
         String st = s.format(cal.getTime());
 
@@ -495,10 +579,10 @@ public class MainActivity extends AppCompatActivity {
         expected_date_view.setText(st);
 
         TextView blank_used_month_textview = findViewById(R.id.blank_used_month);
-        blank_used_month_textview.setText(String.format("%02d", elapsed_month));
+        blank_used_month_textview.setText(String.format("%02d", elapsed_months));
 
         TextView blank_used_days_textview = findViewById(R.id.blank_used_days);
-        blank_used_days_textview.setText(String.format("%02d", elapsed_day));
+        blank_used_days_textview.setText(String.format("%02d", elapsed_days));
 
 
         TextView blank_used_litters_textview = findViewById(R.id.blank_used_litters);
@@ -508,12 +592,12 @@ public class MainActivity extends AppCompatActivity {
         blank_left_months_textview.setText(String.format("%02d", left_months));
 
         TextView blank_left_days_textview = findViewById(R.id.blank_left_days);
-        blank_left_days_textview.setText(String.format("%02d", left_day));
+        blank_left_days_textview.setText(String.format("%02d", left_days));
 
         TextView blank_left_flow_litter_textview = findViewById(R.id.blank_left_flow_litter);
         blank_left_flow_litter_textview.setText(String.format("%04d", left_flow_int));
 
-        if (left_days < 0){
+        if (left_days <= 0){
             TextView expectation_date_string_prefix_textview = findViewById(R.id.expectation_date_string_prefix);
             String first_string = getResources().getString(R.string.passed_expectation_date);
             int modified_left_days = -(int)left_days;
@@ -597,7 +681,7 @@ public class MainActivity extends AppCompatActivity {
             BluetoothDevice btDevice = result.getDevice();
             String deviceName = btDevice.getName();
 
-            if (deviceName != null && deviceName.substring(0, 4).equals(BLE_DEVICE_TARGET_NAME)) {
+            if (deviceName != null && deviceName.length() >= 5 && deviceName.substring(0, 4).equals(BLE_DEVICE_TARGET_NAME)) {
                 String deviceMac = btDevice.getAddress();
 
                 Log.i ("Device", "Name :" + deviceName);
