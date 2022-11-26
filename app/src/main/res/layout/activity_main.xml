@@ -1,153 +1,225 @@
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+<androidx.appcompat.widget.LinearLayoutCompat
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context=".MainActivity">
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <TextView
-        android:id="@+id/operation_status_string"
+
+    <TableLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:layout_marginBottom="0dp"
+        android:layout_margin="8dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:stretchColumns="*">
 
-        android:fontFamily="@font/notosanskr_bold"
-        android:gravity="center_horizontal"
-        android:includeFontPadding="false"
-        android:text="@string/expectation_date_string"
-        android:textColor="@color/black"
-        android:textSize="30sp" />
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
 
-    <androidx.appcompat.widget.LinearLayoutCompat
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:orientation="horizontal">
+            <TextView
+                android:id="@+id/expectation_date_string_prefix"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:textSize="@dimen/table_exchange_size"
 
-        <TextView
-            android:id="@+id/unix_year_value"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:layout_marginBottom="0dp"
+                android:fontFamily="@font/notosanskr_bold"
+                android:text="@string/expectation_date_string_prefix" />
+        </TableRow>
 
-            android:fontFamily="@font/notosanskr_medium"
-            android:gravity="center_horizontal"
-            android:includeFontPadding="false"
-            android:text="@string/two_digit_string"
-            android:textColor="@color/black"
-            android:textSize="30sp" />
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
 
-        <TextView
-            android:id="@+id/unix_year_string"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:layout_marginBottom="0dp"
-            android:fontFamily="@font/notosanskr_medium"
-            android:gravity="center_horizontal"
-            android:includeFontPadding="false"
-            android:text="@string/unix_year"
-            android:textColor="@color/black"
-            android:textSize="30sp" />
-
-        <TextView
-            android:id="@+id/unix_month_value"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:layout_marginBottom="0dp"
-            android:fontFamily="@font/notosanskr_medium"
-            android:gravity="center_horizontal"
-            android:includeFontPadding="false"
-            android:text="@string/two_digit_string"
-            android:textColor="@color/black"
-            android:textSize="30sp" />
-
-        <TextView
-            android:id="@+id/unix_month_string"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:layout_marginBottom="0dp"
-            android:fontFamily="@font/notosanskr_medium"
-            android:gravity="center_horizontal"
-            android:includeFontPadding="false"
-            android:text="@string/unix_day"
-            android:textColor="@color/black"
-            android:textSize="30sp" />
-
-        <TextView
-            android:id="@+id/unix_day_value"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:layout_marginBottom="0dp"
-            android:fontFamily="@font/notosanskr_medium"
-            android:gravity="center_horizontal"
-            android:includeFontPadding="false"
-            android:text="@string/two_digit_string"
-            android:textColor="@color/black"
-            android:textSize="30sp" />
-
-        <TextView
-            android:id="@+id/unix_day_string"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:layout_marginBottom="0dp"
-            android:fontFamily="@font/notosanskr_medium"
-            android:gravity="center_horizontal"
-            android:includeFontPadding="false"
-            android:text="@string/unix_day"
-            android:textColor="@color/black"
-            android:textSize="30sp" />
-    </androidx.appcompat.widget.LinearLayoutCompat>
+            <TextView
+                android:id="@+id/expected_date"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:textSize="@dimen/sub_title_size"
+                android:text="@string/expectation_date_string" />
+        </TableRow>
+    </TableLayout>
 
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/waterflow_status"
         android:layout_width="wrap_content"
         android:layout_height="200dp"
         android:layout_gravity="center"
-        android:layout_marginTop="5dp"
+        android:layout_marginTop="30dp"
+        android:layout_marginBottom="30dp"
         android:adjustViewBounds="true"
         android:scaleType="fitCenter" />
 
-    <androidx.appcompat.widget.LinearLayoutCompat
+    <!-- Used / Left days -->
+    <TableLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:layout_margin="8dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:stretchColumns="*"
+        android:shrinkColumns="*">
 
-        <androidx.appcompat.widget.LinearLayoutCompat
+        <TableRow
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:layout_height="wrap_content">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/notosanskr_black"
+                android:textSize="@dimen/table_title_size"
+                android:gravity="center"
+                android:layout_span="4"
+                android:text="@string/used_days" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/notosanskr_black"
+                android:textSize="@dimen/table_title_size"
+                android:gravity="center"
+                android:layout_span="4"
+                android:text="@string/left_days" />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <!-- blank month -->
+            <TextView
+                android:id="@+id/blank_used_month"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="right"
+                android:textSize="@dimen/normal_font_size"
+                android:text="@string/blank_string" />
+
+            <!-- month unit -->
+            <TextView
+                android:id="@+id/used_month_unit"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="right"
+                android:textSize="@dimen/normal_font_size"
+                android:text="@string/months" />
+
+            <!-- blank day -->
+            <TextView
+                android:id="@+id/blank_used_days"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="right"
+                android:textSize="@dimen/normal_font_size"
+                android:text="@string/blank_string" />
+
+            <!-- day unit -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="left"
+                android:textSize="@dimen/normal_font_size"
+                android:text="@string/days" />
+
+            <!-- blank month -->
+            <TextView
+                android:id="@+id/blank_left_months"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="right"
+                android:textSize="@dimen/normal_font_size"
+                android:text="@string/blank_string" />
+
+            <!-- month unit -->
+            <TextView
+
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="right"
+                android:textSize="@dimen/normal_font_size"
+                android:text="@string/months" />
+
+            <!-- blank day -->
+            <TextView
+                android:id="@+id/blank_left_days"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="right"
+                android:textSize="@dimen/normal_font_size"
+                android:text="@string/blank_string" />
+
+            <!-- day unit -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="left"
+                android:textSize="@dimen/normal_font_size"
+                android:text="@string/days" />
+        </TableRow>
+
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/notosanskr_black"
+                android:textSize="@dimen/table_title_size"
+                android:gravity="center"
+                android:layout_span="4"
+                android:text="@string/used_litters" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/notosanskr_black"
+                android:textSize="@dimen/table_title_size"
+                android:gravity="center"
+                android:layout_span="4"
+                android:text="@string/left_litters" />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <TextView
+                android:id="@+id/blank_used_litters"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="right"
+                android:textSize="@dimen/normal_font_size"
+                android:layout_span="2"
+                android:text="@string/blank_string" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:fontFamily="@font/notosanskr_regular"
-                android:text="@string/used_days" />
-        </androidx.appcompat.widget.LinearLayoutCompat>
-
-        <androidx.appcompat.widget.LinearLayoutCompat
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-
+                android:gravity="left"
+                android:textSize="@dimen/normal_font_size"
+                android:layout_span="2"
+                android:text="@string/litter" />
+            <TextView
+                android:id="@+id/blank_left_flow_litter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="right"
+                android:textSize="@dimen/normal_font_size"
+                android:layout_span="2"
+                android:text="@string/blank_string" />
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:fontFamily="@font/notosanskr_regular"
-                android:text="@string/used_days" />
+                android:gravity="left"
+                android:textSize="@dimen/normal_font_size"
+                android:layout_span="2"
+                android:text="@string/litter" />
+        </TableRow>
 
-        </androidx.appcompat.widget.LinearLayoutCompat>
 
-    </androidx.appcompat.widget.LinearLayoutCompat>
+    </TableLayout>
 
-</LinearLayout>
+</androidx.appcompat.widget.LinearLayoutCompat>

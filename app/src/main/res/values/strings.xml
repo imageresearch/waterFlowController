@@ -5,8 +5,14 @@
     <string name="available_device">연결 가능한 BLE 장치</string>
     <string name="ble_not_supporting">장치가 BLE를 지원하지 않습니다.</string>
     <string name="ble_not_connected">블루투스 장치와 연결이 되지 않았습니다.</string>
-
-    <string name="expectation_date_string">필터 교환 예상 날짜는</string>
+    <string name="permission_ble_not_connected_alert_title">권한 제한</string>
+    <string name="permission_blue_not_connected">"위치 정보 및 액세스 권한이 허용되지 않아서 Bluetooth를 검색 및 연결할 수 없습니다."</string>
+    <string name="expectation_date_string_prefix">필터 교환 예상 날짜는</string>
+    <string name="passed_expectation_date">필터 교환 날짜가 </string>
+    <string name="passed_expectation_days">일 지났습니다.</string>
+    <string name="request_direct_change">바로 필터 교환이 필요합니다.</string>
+    <string name="expectation_date_string">yyyy년 MM월 dd일입니다.</string>
+    <string name="blank_string"> </string>
     <string name="unix_year">년</string>
     <string name="unix_month">월</string>
     <string name="two_digit_string">  </string>
@@ -21,4 +27,6 @@
     <string name="days">일</string>
     <string name="OK">예</string>
     <string name="CANCEL">아니오</string>
+    <string name="custom_dialog_title">필터 교체 날짜 업데이트</string>
+    <string name="filter_update_content">필터 교체 날짜 업데이트를 진행하시겠습니까?</string>
 </resources>

@@ -32,12 +32,18 @@ public class DeviceScanActivity extends AppCompatActivity {
         deviceListview = findViewById(R.id.listDevice);
         deviceListview.setAdapter(deviceListAdapter);
 
+        byte[] new_date = new byte[4];
+        byte[] new_flow_capacity = new byte[2];
+        byte[] new_accumulated_flow = new byte[2];
 
         for (BLEDeviceItem item:mBLEDeviceItemList){
             deviceListAdapter.addItem (
                     item.getDeviceName(),
                     item.getDeviceMac(),
+                    new_flow_capacity,
+                    new_accumulated_flow,
                     item.getDeviceRSSI(),
+                    new_date,
                     item.isConnected());
 
         }

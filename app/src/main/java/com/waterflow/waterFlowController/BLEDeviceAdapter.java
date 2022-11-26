@@ -84,10 +84,19 @@ public class BLEDeviceAdapter extends BaseAdapter {
     public void addItem(
                     String      deviceName,
                     String      deviceMAC,
+                    byte[]      flow_capacity,
+                    byte[]      accumulated_flow,
                     int         deviceRSSI,
+                    byte[]      filter_date,
                     boolean     bConnected){
 
-        BLEDeviceItem   deviceItem = new BLEDeviceItem(deviceName, deviceMAC, deviceRSSI, bConnected);
+        BLEDeviceItem   deviceItem = new BLEDeviceItem(
+                                            deviceName,
+                                            deviceMAC,
+                                            flow_capacity,
+                accumulated_flow,
+                                            filter_date,
+                                            deviceRSSI, bConnected);
         listViewItemList.add(deviceItem);
     }
 }
