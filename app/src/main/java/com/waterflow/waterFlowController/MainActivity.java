@@ -72,9 +72,11 @@ public class MainActivity extends AppCompatActivity {
     private BluetoothLeScanner  mLEScanner;
     public  BluetoothDevice     activatedBTDevice = null;
 
+    public boolean              requestUpdate = false;
+
+
     public boolean mScanning;
 
-    public boolean              bNeedUpdateFirmware = false;
 
     List<BLEDeviceItem> BLEDeviceItemList = new ArrayList<>();
     private BluetoothGatt mGatt;
@@ -131,6 +133,7 @@ public class MainActivity extends AppCompatActivity {
 
         waterflow_status = findViewById(R.id.waterflow_status);
         checkPermission();
+        initializeContent();
     }
 
 
@@ -209,6 +212,7 @@ public class MainActivity extends AppCompatActivity {
      **************************************************************************/
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+/*
         int id = item.getItemId();
 
         if (id == R.id.menu_setting) {
@@ -221,6 +225,8 @@ public class MainActivity extends AppCompatActivity {
             startActivity(intent);
             return true;
         }
+*/
+        requestUpdate = true;
         return super.onOptionsItemSelected(item);
     }
 
@@ -276,6 +282,7 @@ public class MainActivity extends AppCompatActivity {
         alertDialogBuilder.setMessage(R.string.filter_update_content)
                 .setCancelable(false)
                 .setPositiveButton(R.string.OK, new DialogInterface.OnClickListener() {
+                    @SuppressLint("MissingPermission")
                     public void onClick(DialogInterface dialog, int id) {
                         writeCharacteristic(
                                 mIOCharacteristic,
@@ -286,15 +293,19 @@ public class MainActivity extends AppCompatActivity {
                                 mIOCharacteristic,
                                 0xA4, null);
 */
-                        finish();
+                        requestUpdate = false;
+                        scanLeDevice(true);
+                        //mGatt.disconnect();
+                        //finish();
                     }
                 })
                 .setNegativeButton(R.string.CANCEL, new DialogInterface.OnClickListener() {
+                    @SuppressLint("MissingPermission")
                     public void onClick(DialogInterface dialog, int id) {
-                        //  Action for 'NO' Button
+                        requestUpdate = false;
+                        mGatt.disconnect();
                         dialog.cancel();
-                        Toast.makeText(getApplicationContext(),"you choose no action for alertbox",
-                                Toast.LENGTH_SHORT).show();
+                        scanLeDevice(true);
                     }
                 });
 
@@ -505,7 +516,7 @@ public class MainActivity extends AppCompatActivity {
                     mScanning = false;
                     mLEScanner.stopScan(mLeScanCallback);
 */
-                    mLEScanner.startScan(mLeScanCallback);
+                    //mLEScanner.startScan(mLeScanCallback);
                 }
             }, SCAN_PERIOD);
 
@@ -519,6 +530,9 @@ public class MainActivity extends AppCompatActivity {
             ScanSettings scanSettings = new ScanSettings.
                     Builder().
                     setScanMode(ScanSettings.SCAN_MODE_LOW_POWER).
+                    setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).
+                    setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES).
+                    setReportDelay(0L).
                     build();
 
             mLEScanner.startScan(
@@ -526,13 +540,13 @@ public class MainActivity extends AppCompatActivity {
                     scanSettings,
                     mLeScanCallback);
         } else {
-            mScanning = false;
-            mLEScanner.stopScan(mLeScanCallback);
+            //mScanning = false;
+            //mLEScanner.stopScan(mLeScanCallback);
         }
     }
 
 
-    private void UpdateContent(
+    public void UpdateContent(
                     byte[] filter_update_date,
                     byte[] filter_capacity,
                     byte[] accumulated_flow) {
@@ -612,14 +626,16 @@ public class MainActivity extends AppCompatActivity {
                     .skipMemoryCache(true)
                     .into(waterflow_status);
 
-        } else {
-            Glide
-                    .with(this)
-                    .load(R.drawable.normal_water_flow)
-                    .skipMemoryCache(true)
-                    .into(waterflow_status);
-
         }
+
+    }
+
+    private void initializeContent(){
+        Glide
+                .with(this)
+                .load(R.drawable.normal_water_flow)
+                .skipMemoryCache(true)
+                .into(waterflow_status);
 
     }
 
@@ -633,29 +649,31 @@ public class MainActivity extends AppCompatActivity {
 
 
     /***************************************************************************
-     *
+     *  This function is called only when the device is connected and
+     *  the device is connected only when the firmware needs to be updated.
      **************************************************************************/
+    @SuppressLint("MissingPermission")
     private void notifyConnected(){
         Toast.makeText (
                 MainActivity.this,
                 R.string.ble_connected,
                 Toast.LENGTH_SHORT).show();
+/*
 
         byte[] filterDateBytes = BLEDeviceItemList.get(0).getFilterDateBytes();
         byte[] filter_capacity = BLEDeviceItemList.get(0).getFilterCapacity();
         byte[] accumulated_flow = BLEDeviceItemList.get(0).getWaterCapacity();
+*/
 
-        if (needToUpdateFirmware(filterDateBytes))
-            showFilterUpdateAlertDialog();
-
-        UpdateContent(
+        showFilterUpdateAlertDialog();
+/*
+        else
+            UpdateContent(
                 filterDateBytes,
                 filter_capacity,
                 accumulated_flow
         );
-
-
-
+*/
     }
 
     private boolean needToUpdateFirmware(byte[] dateBytes){
@@ -735,7 +753,16 @@ public class MainActivity extends AppCompatActivity {
                             result.getRssi(),
                             true);
                     BLEDeviceItemList.add(newBLEDeviceItem);
-                    connectToDevice(btDevice);  // we connect only to the first one found.
+
+                    if (needToUpdateFirmware(date_bytes) || requestUpdate) {
+                        mLEScanner.stopScan(mLeScanCallback);
+                        connectToDevice(btDevice);  // we connect only to the first one found.
+                    }
+                    else
+                        mHandler.post(() -> UpdateContent(
+                                                date_bytes,
+                                                flow_capacity,
+                                                accumulated_flow));
 
                 } else {
 
@@ -746,6 +773,16 @@ public class MainActivity extends AppCompatActivity {
                             item.setFilter_capacity(flow_capacity);
                             item.setFilter_date(date_bytes);
                             item.setAccumulated_flow(accumulated_flow);
+                            if (needToUpdateFirmware(date_bytes) || requestUpdate) {
+                                mLEScanner.stopScan(mLeScanCallback);
+                                connectToDevice(btDevice);
+                            }
+
+                            else
+                                mHandler.post(() -> UpdateContent(
+                                    date_bytes,
+                                    flow_capacity,
+                                    accumulated_flow));
                             return;
                         }
                     }
@@ -895,6 +932,28 @@ public class MainActivity extends AppCompatActivity {
             if (newValue == null) {
                 Log.e(TAG, "Null Data Received.... Check the H/W");
                 return;
+            }
+
+            if (characteristic == mIOCharacteristic){
+
+                switch(newValue[0]){
+                    case (byte)0xA1 :
+                        switch (newValue[1]){
+                            case (byte)0x1 :
+                                mGatt.disconnect();
+                                mHandler.post(()->requestUpdate=false);
+                                break;
+                        }
+                        break;
+                    case (byte)0xA4 :
+                        switch (newValue[1]){
+                            case (byte)0x01 :
+                                mGatt.disconnect();
+                                mHandler.post(()->requestUpdate=false);
+                                break;
+                        }
+                }
+
             }
         }
 
