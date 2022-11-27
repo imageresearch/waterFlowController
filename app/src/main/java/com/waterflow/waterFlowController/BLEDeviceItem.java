@@ -10,6 +10,8 @@ import androidx.annotation.RequiresApi;
 import java.util.Date;
 
 public class BLEDeviceItem implements Parcelable {
+
+    public BluetoothDevice  mBLEDevice;
     public int              imageID;
     public String           deviceName;
     public String           deviceMac;
@@ -21,6 +23,7 @@ public class BLEDeviceItem implements Parcelable {
     public boolean          isConnected;
 
     public BLEDeviceItem(
+                    BluetoothDevice     bluetoothDevice,
                     String              deviceName,
                     String              deviceMac,
                     byte[]              filterCapacity,
@@ -28,7 +31,7 @@ public class BLEDeviceItem implements Parcelable {
                     byte[]              filter_date,
                     int     rssi,
                     boolean isConnected){
-        this.imageID = imageID;
+        this.mBLEDevice = bluetoothDevice;
         this.deviceName = deviceName;
         this.deviceMac = deviceMac;
         this.filter_capacity = filterCapacity;
@@ -101,6 +104,9 @@ public class BLEDeviceItem implements Parcelable {
     public byte[] getFilterDateBytes() {
         return this.filter_date;
     }
+
+
+    public BluetoothDevice getBluetoothDevice() { return this.mBLEDevice;}
 
     @Override
     public int describeContents() {

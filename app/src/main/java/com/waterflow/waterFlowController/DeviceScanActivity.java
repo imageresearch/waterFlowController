@@ -2,6 +2,7 @@ package com.waterflow.waterFlowController;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.bluetooth.BluetoothDevice;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.ListView;
@@ -35,9 +36,11 @@ public class DeviceScanActivity extends AppCompatActivity {
         byte[] new_date = new byte[4];
         byte[] new_flow_capacity = new byte[2];
         byte[] new_accumulated_flow = new byte[2];
+        //BluetoothDevice         bluetoothDevice = null;
 
         for (BLEDeviceItem item:mBLEDeviceItemList){
             deviceListAdapter.addItem (
+                    null,
                     item.getDeviceName(),
                     item.getDeviceMac(),
                     new_flow_capacity,

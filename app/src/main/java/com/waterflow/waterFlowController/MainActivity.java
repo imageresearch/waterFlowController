@@ -1,7 +1,6 @@
 package com.waterflow.waterFlowController;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -25,14 +24,11 @@ import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.ParcelUuid;
-import android.os.Parcelable;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -44,21 +40,14 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 
 import java.text.SimpleDateFormat;
-import java.time.Duration;
 import java.time.LocalDate;
-import java.time.OffsetDateTime;
 import java.time.Period;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Locale;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -70,13 +59,6 @@ public class MainActivity extends AppCompatActivity {
     private BluetoothAdapter    mBluetoothAdapter;
     private Handler             mHandler;
     private BluetoothLeScanner  mLEScanner;
-    public  BluetoothDevice     activatedBTDevice = null;
-
-    public boolean              requestUpdate = false;
-
-
-    public boolean mScanning;
-
 
     List<BLEDeviceItem> BLEDeviceItemList = new ArrayList<>();
     private BluetoothGatt mGatt;
@@ -89,26 +71,10 @@ public class MainActivity extends AppCompatActivity {
      **************************************************************************/
     private static final int REQUEST_ENABLE_BT = 1;
 
-
-
-    public String BLE_DEVICE_TARGET_NAME="FLOW";
-
-    private static final long SCAN_PERIOD = 10000;
-    public boolean foundDevices = false;
-
     public String SERVICE_UUID_STRING = "18424398-7cbc-11e9-8f9e-2a86e4085a59";
-    public String CHARACTERSTIC_UUID_STRING = "2d86686a-53dc-25b3-0c4a-f0e10c8dee20";
-
-    public UUID UUID_SERVICE = UUID.fromString(SERVICE_UUID_STRING);
-    public UUID UUID_CHARACTERSTIC = UUID.fromString(CHARACTERSTIC_UUID_STRING);
+    public String CHARACTERISTIC_UUID_STRING = "2d86686a-53dc-25b3-0c4a-f0e10c8dee20";
 
     BluetoothGattCharacteristic mIOCharacteristic = null;
-
-
-
-    private int     advertisement_offset = 29;
-
-
 
 
     ImageView waterflow_status;
@@ -116,7 +82,6 @@ public class MainActivity extends AppCompatActivity {
 
     /***************************************************************************
      *
-     * @param savedInstanceState
      **************************************************************************/
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -140,9 +105,6 @@ public class MainActivity extends AppCompatActivity {
     /***************************************************************************
      *  Called when the permission check request has been done
      *
-     * @param requestCode
-     * @param permissions
-     * @param grantResults
      **************************************************************************/
     @SuppressLint("MissingPermission")
     @Override
@@ -207,26 +169,10 @@ public class MainActivity extends AppCompatActivity {
 
     /***************************************************************************
      *
-     * @param item
-     * @return
      **************************************************************************/
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-/*
-        int id = item.getItemId();
-
-        if (id == R.id.menu_setting) {
-            Intent intent = new Intent(
-                    this,
-                    DeviceScanActivity.class);
-            intent.putParcelableArrayListExtra(
-                    "BLEDevice",
-                    (ArrayList<? extends Parcelable>) BLEDeviceItemList);
-            startActivity(intent);
-            return true;
-        }
-*/
-        requestUpdate = true;
+        showFilterUpdateAlertDialog();
         return super.onOptionsItemSelected(item);
     }
 
@@ -273,40 +219,21 @@ public class MainActivity extends AppCompatActivity {
      * It'll be called only when the advertisement filed has the default
      * unix timestamp.
      **************************************************************************/
-    private void showFilterUpdateAlertDialog(){
+    public void showFilterUpdateAlertDialog(){
+
+        scanLeDevice(false);        // we should stop BLE scan first
 
         AlertDialog.Builder alertDialogBuilder;
         alertDialogBuilder = new AlertDialog.Builder(this);
 
         alertDialogBuilder.setTitle(R.string.custom_dialog_title);
-        alertDialogBuilder.setMessage(R.string.filter_update_content)
-                .setCancelable(false)
-                .setPositiveButton(R.string.OK, new DialogInterface.OnClickListener() {
-                    @SuppressLint("MissingPermission")
-                    public void onClick(DialogInterface dialog, int id) {
-                        writeCharacteristic(
-                                mIOCharacteristic,
-                                0xA1,
-                                convertUnixTimeStamp2Bytes(getCurrentUnixTimeStamp()));
-/*
-                        writeCharacteristic(
-                                mIOCharacteristic,
-                                0xA4, null);
-*/
-                        requestUpdate = false;
-                        scanLeDevice(true);
-                        //mGatt.disconnect();
-                        //finish();
-                    }
-                })
-                .setNegativeButton(R.string.CANCEL, new DialogInterface.OnClickListener() {
-                    @SuppressLint("MissingPermission")
-                    public void onClick(DialogInterface dialog, int id) {
-                        requestUpdate = false;
-                        mGatt.disconnect();
-                        dialog.cancel();
-                        scanLeDevice(true);
-                    }
+        alertDialogBuilder
+                .setMessage(R.string.filter_update_content)
+                .setCancelable(true)
+                .setPositiveButton(R.string.OK, (dialog, id) -> connectToDevice(
+                        BLEDeviceItemList.get(0).getBluetoothDevice()))
+                .setNegativeButton(R.string.CANCEL, (dialog, id) -> {
+                    scanLeDevice(true); // we should re-start the scan
                 });
 
         AlertDialog alertDialog = alertDialogBuilder.create();
@@ -324,7 +251,6 @@ public class MainActivity extends AppCompatActivity {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             permissions = new String[]{
-                    //Manifest.permission.BLUETOOTH,
                     Manifest.permission.BLUETOOTH_SCAN,
                     Manifest.permission.BLUETOOTH_CONNECT
             };
@@ -375,19 +301,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private long getElapsedDays(long elapsed_time_stamp){
-        return TimeUnit.MILLISECONDS.toDays(elapsed_time_stamp);
-    }
-
-    private long getElapsedTimeStamp(long legacy_time_stamp){
-        return getCurrentUnixTimeStamp() - legacy_time_stamp;
-    }
-
     /***************************************************************************
      * Warning
      *  The parameter of timestamp should be in milli-seconds
-     * @param timestamp
-     * @return
      **************************************************************************/
     private Date convertTimestampToDate(long timestamp){
         return new Date(timestamp * 1000);
@@ -398,7 +314,7 @@ public class MainActivity extends AppCompatActivity {
         long returnValue = 0;
         if (bytes != null) {
             for (int count = 0; count < bytes.length; count++)
-                returnValue += (bytes[count] & 0xFF) << (8 * count);
+                returnValue += (long) (bytes[count] & 0xFF) << (8 * count);
         }
 
         return returnValue;
@@ -416,68 +332,21 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private Date getCurrentDate(){
-        Date c = Calendar.getInstance().getTime();
-        return c;
+        return Calendar.getInstance().getTime();
     }
 
-
-    private Duration getDateDifference(Date deviceDate, Date mobileDate){
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            return Duration.between(mobileDate.toInstant(), deviceDate.toInstant());
-        }
-        return null;
-    }
 
     private LocalDate convertToLocalDate(Date dateToConvert){
         return dateToConvert.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
     private int getElapsedDays(Date deviceDate, Date mobileDate, int type){
-/*
-        Calendar deviceCalendar = new GregorianCalendar();
-        Calendar mobileCalendar = new GregorianCalendar();
-        deviceCalendar.setTime(deviceDate);
-        mobileCalendar.setTime(mobileDate);
-
-        int returnValue  = 0;
-
-        switch (type){
-            case 0 :
-                returnValue = mobileCalendar.get(Calendar.DAY_OF_MONTH) - deviceCalendar.get(Calendar.DAY_OF_MONTH);
-                break;
-            case 1 :
-                returnValue = mobileCalendar.get(Calendar.MONTH) - deviceCalendar.get(Calendar.MONTH);
-                break;
-            default :
-                break;
-        }
-        return returnValue;
-*/
-        int returnVal = 0;
+        int returnVal;
         Period period;
-/*
-
-        DateTimeFormatter formatter = null;
-        formatter = DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss O yyyy");
-
-        String deviceDateString = deviceDate.toString();
-        String mobileDateString = mobileDate.toString();
-
-        ZoneOffset zoneOffset = null;
-        zoneOffset = ZoneOffset.ofHours(6);
-
-        OffsetDateTime deviceOffset = null;
-        deviceOffset = OffsetDateTime.parse(deviceDateString, formatter).withOffsetSameLocal(zoneOffset);
-
-        OffsetDateTime mobileOffset = null;
-        mobileOffset = OffsetDateTime.parse(mobileDateString, formatter).withOffsetSameLocal(zoneOffset);
-*/
 
         period = Period.between(
                     convertToLocalDate(deviceDate),
-                    convertToLocalDate(mobileDate)
-                    );
+                    convertToLocalDate(mobileDate));
 
         switch(type){
             case 0 :
@@ -509,26 +378,17 @@ public class MainActivity extends AppCompatActivity {
     @SuppressLint("MissingPermission")
     private void scanLeDevice(final boolean enable) {
 
-        if (enable) {
-            mLEScanner = mBluetoothAdapter.getBluetoothLeScanner();
-            mHandler.postDelayed(() -> {
-                if (!BLEDeviceItemList.isEmpty()) { // we found the device(s)
-/*
-                    mScanning = false;
-                    mLEScanner.stopScan(mLeScanCallback);
-*/
-                    //mLEScanner.startScan(mLeScanCallback);
-                }
-            }, SCAN_PERIOD);
+        if (!enable){
+            if (mLEScanner != null)
+                mLEScanner.stopScan(mLeScanCallback);
+            Log.i(TAG, "=============> Stop scanning BLE devices");
+            return;
+        }
 
-            mScanning = true;
+        mLEScanner = mBluetoothAdapter.getBluetoothLeScanner();
 
-            List<ScanFilter> filters = new ArrayList<>();
-/*
-            ScanFilter scanFilter = new ScanFilter.Builder().setDeviceName("FLOW_.*").build();
-            filters.add(scanFilter);
-*/
-            ScanSettings scanSettings = new ScanSettings.
+        List<ScanFilter> filters = new ArrayList<>();
+        ScanSettings scanSettings = new ScanSettings.
                     Builder().
                     setScanMode(ScanSettings.SCAN_MODE_LOW_POWER).
                     setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).
@@ -536,14 +396,11 @@ public class MainActivity extends AppCompatActivity {
                     setReportDelay(0).
                     build();
 
-            mLEScanner.startScan(
+        mLEScanner.startScan(
                     filters,
                     scanSettings,
                     mLeScanCallback);
-        } else {
-            //mScanning = false;
-            //mLEScanner.stopScan(mLeScanCallback);
-        }
+        Log.i(TAG, "=============> Start Scanning BLE devices ");
     }
 
 
@@ -560,14 +417,9 @@ public class MainActivity extends AppCompatActivity {
         Date filter_update_date_fmt = convertTimestampToDate(filter_update_unix_time_stamp);
         Date current_date = getCurrentDate();
 
-        long elapsed_days = 0;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            elapsed_days = getElapsedDays(filter_update_date_fmt, current_date, 0);
-        }
-        long elapsed_months = 0;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            elapsed_months = getElapsedDays(filter_update_date_fmt, current_date, 1);
-        }
+        long elapsed_days = getElapsedDays(filter_update_date_fmt, current_date, 0);
+        long elapsed_months = getElapsedDays(filter_update_date_fmt, current_date, 1);
+
 
         // To prevent the zero-dividing problem, we set the elapsed days to 1 if it is 0
         long left_days = (left_flow_int <= 0)? 0: left_flow_int / ((elapsed_days == 0)? 1:elapsed_days);
@@ -576,13 +428,8 @@ public class MainActivity extends AppCompatActivity {
         cal.add(Calendar.DATE, (int)left_days);
         Date resultDate = new Date(cal.getTimeInMillis());
 
-        long left_months = 0;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            left_months = getElapsedDays(filter_update_date_fmt, resultDate, 1);
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            left_days = getElapsedDays(filter_update_date_fmt, resultDate, 0);
-        }
+        long left_months = getElapsedDays(filter_update_date_fmt, resultDate, 1);
+        left_days = getElapsedDays(filter_update_date_fmt, resultDate, 0);
 
         String formatted_string = getResources().getString(R.string.expectation_date_string);
         SimpleDateFormat s = new SimpleDateFormat(formatted_string, Locale.getDefault());
@@ -601,7 +448,7 @@ public class MainActivity extends AppCompatActivity {
         TextView used_days_textview = findViewById(R.id.used_days);
         used_days_textview.setText(merged_used_days);
 
-        String merged_left_days = String.format("%02d", left_days) + month + " " + String.format("%02d", left_days) + days;
+        String merged_left_days = String.format("%02d", left_months) + month + " " + String.format("%02d", left_days) + days;
         TextView left_days_textview = findViewById(R.id.left_days);
         left_days_textview.setText(merged_left_days);
 
@@ -632,21 +479,34 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    /***************************************************************************
+     *
+     **************************************************************************/
     private void initializeContent(){
+
         Glide
                 .with(this)
                 .load(R.drawable.normal_water_flow)
                 .skipMemoryCache(true)
                 .into(waterflow_status);
 
+
     }
 
 
-    private void notifyDisconnected(){
-        Toast.makeText (
+    /***************************************************************************
+     * Called when the BLE connection has been disconnected.
+     *
+     **************************************************************************/
+    private void notifyDisconnected(boolean bDisplayMessage){
+        if (bDisplayMessage)
+            Toast.makeText (
                 MainActivity.this,
                 R.string.ble_not_connected,
                 Toast.LENGTH_SHORT).show();
+
+        scanLeDevice(true); // when all BLEs are disconnected,
+                                   // we should try to rescan
     }
 
 
@@ -655,27 +515,17 @@ public class MainActivity extends AppCompatActivity {
      *  the device is connected only when the firmware needs to be updated.
      **************************************************************************/
     @SuppressLint("MissingPermission")
-    private void notifyConnected(){
-        Toast.makeText (
+    private void notifyConnected(boolean bDisplayMessage){
+        if (bDisplayMessage)
+            Toast.makeText (
                 MainActivity.this,
                 R.string.ble_connected,
                 Toast.LENGTH_SHORT).show();
-/*
 
-        byte[] filterDateBytes = BLEDeviceItemList.get(0).getFilterDateBytes();
-        byte[] filter_capacity = BLEDeviceItemList.get(0).getFilterCapacity();
-        byte[] accumulated_flow = BLEDeviceItemList.get(0).getWaterCapacity();
-*/
-
-        showFilterUpdateAlertDialog();
-/*
-        else
-            UpdateContent(
-                filterDateBytes,
-                filter_capacity,
-                accumulated_flow
-        );
-*/
+        writeCharacteristic(
+                mIOCharacteristic,
+                0xA1,
+                convertUnixTimeStamp2Bytes(getCurrentUnixTimeStamp()));
     }
 
     private boolean needToUpdateFirmware(byte[] dateBytes){
@@ -701,11 +551,14 @@ public class MainActivity extends AppCompatActivity {
             BluetoothDevice btDevice = result.getDevice();
             String deviceName = btDevice.getName();
 
-            if (deviceName != null && deviceName.length() >= 5 && deviceName.substring(0, 4).equals(BLE_DEVICE_TARGET_NAME)) {
-                String deviceMac = btDevice.getAddress();
+            final String BLE_DEVICE_TARGET_NAME="FLOW";
 
-                Log.i ("Device", "Name :" + deviceName);
-                Log.i ("Device", "Mac : " + deviceMac);
+            if (deviceName != null &&
+                deviceName.length() >= 5 &&
+                deviceName.substring(0, 4).equals(BLE_DEVICE_TARGET_NAME)) {
+
+                String deviceMac = btDevice.getAddress();
+                Log.d ("Scan Callback", "Found device : " + deviceName +"(Name) " + deviceMac + "(MAC)");
 
                 byte[] scanRecord = result.getScanRecord().getBytes();
 
@@ -713,6 +566,7 @@ public class MainActivity extends AppCompatActivity {
                 byte[] flow_capacity = new byte[2];
                 byte[] accumulated_flow = new byte[2];
 
+                int advertisement_offset = 29;
                 System.arraycopy(
                         scanRecord,
                         advertisement_offset,
@@ -737,16 +591,23 @@ public class MainActivity extends AppCompatActivity {
                         2
                 );
 
-                Log.i (
-                        "BLE", "Time Stamp Byte : " +
+                Log.d (
+                        "Scan Callback", "(Time Stamp Byte : [" +
                                 date_bytes[0] + " " +
                                 date_bytes[1] + " " +
                                 date_bytes[2] + " " +
-                                date_bytes[3]);
+                                date_bytes[3] + "], " +
+                                "Flow Capacity : [" +
+                                flow_capacity[0] + " " +
+                                flow_capacity[1] + "], " +
+                                "Accumulated Used Flow Amount : [" +
+                                accumulated_flow[0] + " " +
+                                accumulated_flow[1] + "])");
 
 
                 if (BLEDeviceItemList.isEmpty()){
                     BLEDeviceItem newBLEDeviceItem = new BLEDeviceItem(
+                            btDevice,
                             deviceName,
                             btDevice.getAddress(),
                             flow_capacity,
@@ -756,10 +617,8 @@ public class MainActivity extends AppCompatActivity {
                             true);
                     BLEDeviceItemList.add(newBLEDeviceItem);
 
-                    if (needToUpdateFirmware(date_bytes) || requestUpdate) {
-                        mLEScanner.stopScan(mLeScanCallback);
-                        connectToDevice(btDevice);  // we connect only to the first one found.
-                    }
+                    if (needToUpdateFirmware(date_bytes))
+                        mHandler.post(() -> showFilterUpdateAlertDialog());
                     else
                         mHandler.post(() -> UpdateContent(
                                                 date_bytes,
@@ -775,11 +634,9 @@ public class MainActivity extends AppCompatActivity {
                             item.setFilter_capacity(flow_capacity);
                             item.setFilter_date(date_bytes);
                             item.setAccumulated_flow(accumulated_flow);
-                            if (needToUpdateFirmware(date_bytes) || requestUpdate) {
-                                mLEScanner.stopScan(mLeScanCallback);
-                                connectToDevice(btDevice);
-                            }
 
+                            if (needToUpdateFirmware(date_bytes))
+                                mHandler.post(()->showFilterUpdateAlertDialog());
                             else
                                 mHandler.post(() -> UpdateContent(
                                     date_bytes,
@@ -789,6 +646,11 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
 
+                    // Even though we already found the BLE, we found a new one
+                    // Todo : currently, we consider one BLE.
+                    //  Let's think over the additional one later
+
+                    /*
                     BLEDeviceItem newBLEDeviceItem = new BLEDeviceItem(
                             deviceName,
                             btDevice.getAddress(),
@@ -798,6 +660,7 @@ public class MainActivity extends AppCompatActivity {
                             result.getRssi(),
                             false);
                     BLEDeviceItemList.add(newBLEDeviceItem);
+                    */
 
                 }
             }
@@ -822,7 +685,7 @@ public class MainActivity extends AppCompatActivity {
         if (mGatt != null)
             mGatt = null;
 
-        activatedBTDevice = deviceToConnect;
+        scanLeDevice(false);
 
         mGatt = deviceToConnect.connectGatt(
                     this,
@@ -838,8 +701,6 @@ public class MainActivity extends AppCompatActivity {
                     bleDeviceItem.setConnected(true);
             }
         }
-
-        scanLeDevice(false);    // will stop after first device detection
     }
 
     private final BluetoothGattCallback gattCallback = new BluetoothGattCallback() {
@@ -865,7 +726,12 @@ public class MainActivity extends AppCompatActivity {
             switch (newState){
                 case BluetoothProfile.STATE_CONNECTED:
                     Log.i ("gattCallback", "STATE_CONNECTED");
-                    gatt.discoverServices(); // Now, try to find the services
+                    gatt.discoverServices();    // Now, try to find the services
+                                                // Don't notify that we've connected
+                                                // the BLE device yet.
+                                                // It's will be notified after
+                                                // all characteristics we need are
+                                                // found
                     break;
                 case BluetoothProfile.STATE_DISCONNECTED:
                     Log.e("gattCallback", "STATE_DISCONNECTED");
@@ -876,9 +742,7 @@ public class MainActivity extends AppCompatActivity {
                                 mGatt.getDevice().getName().equals(deviceItem.deviceName))
                             deviceItem.setConnected(false);
                     }
-
-
-                    mHandler.post(() -> notifyDisconnected());
+                    mHandler.post(() -> notifyDisconnected(false));
                     break;
                 default:
                     Log.e("gattCallback", "STATE_OTHER");
@@ -909,9 +773,9 @@ public class MainActivity extends AppCompatActivity {
                 for (BluetoothGattCharacteristic characteristic: characteristics){
                     Log.i("Characteristic UUID :", characteristic.getUuid().toString());
 
-                    if (characteristic.getUuid().toString().equals(CHARACTERSTIC_UUID_STRING)) {
+                    if (characteristic.getUuid().toString().equals(CHARACTERISTIC_UUID_STRING)) {
                         mIOCharacteristic = characteristic;
-                        mHandler.post(() -> notifyConnected());
+                        mHandler.post(() -> notifyConnected(false));
 
                     }
                 }
@@ -943,7 +807,7 @@ public class MainActivity extends AppCompatActivity {
                         switch (newValue[1]){
                             case (byte)0x1 :
                                 mGatt.disconnect();
-                                mHandler.post(()->requestUpdate=false);
+                                //mHandler.post(()->notifyDisconnected(false));
                                 break;
                         }
                         break;
@@ -951,7 +815,7 @@ public class MainActivity extends AppCompatActivity {
                         switch (newValue[1]){
                             case (byte)0x01 :
                                 mGatt.disconnect();
-                                mHandler.post(()->requestUpdate=false);
+                                //mHandler.post(()->notifyDisconnected(false));
                                 break;
                         }
                 }
@@ -1061,9 +925,8 @@ public class MainActivity extends AppCompatActivity {
         byte[] totalBytes = new byte[1 + ((data != null && data.length != 0)? data.length:0)];
         totalBytes[0] = (byte) command;
 
-        if (data != null && data.length != 0) {
+        if (data != null && data.length != 0)
             System.arraycopy(data, 0, totalBytes, 1, data.length);
-        }
 
 
         mIOCharacteristic.setValue(totalBytes);

@@ -1,5 +1,6 @@
 package com.waterflow.waterFlowController;
 
+import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -82,6 +83,7 @@ public class BLEDeviceAdapter extends BaseAdapter {
 
 
     public void addItem(
+                    BluetoothDevice btDevice,
                     String      deviceName,
                     String      deviceMAC,
                     byte[]      flow_capacity,
@@ -91,6 +93,7 @@ public class BLEDeviceAdapter extends BaseAdapter {
                     boolean     bConnected){
 
         BLEDeviceItem   deviceItem = new BLEDeviceItem(
+                                            btDevice,
                                             deviceName,
                                             deviceMAC,
                                             flow_capacity,
