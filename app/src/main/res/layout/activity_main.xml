@@ -74,7 +74,6 @@
                 android:fontFamily="@font/notosanskr_black"
                 android:textSize="@dimen/table_title_size"
                 android:gravity="center"
-                android:layout_span="4"
                 android:text="@string/used_days" />
             <TextView
                 android:layout_width="wrap_content"
@@ -82,7 +81,6 @@
                 android:fontFamily="@font/notosanskr_black"
                 android:textSize="@dimen/table_title_size"
                 android:gravity="center"
-                android:layout_span="4"
                 android:text="@string/left_days" />
         </TableRow>
 
@@ -92,73 +90,23 @@
 
             <!-- blank month -->
             <TextView
-                android:id="@+id/blank_used_month"
+                android:id="@+id/used_days"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:gravity="right"
-                android:textSize="@dimen/normal_font_size"
-                android:text="@string/blank_string" />
-
-            <!-- month unit -->
-            <TextView
-                android:id="@+id/used_month_unit"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="right"
-                android:textSize="@dimen/normal_font_size"
-                android:text="@string/months" />
-
-            <!-- blank day -->
-            <TextView
-                android:id="@+id/blank_used_days"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="right"
-                android:textSize="@dimen/normal_font_size"
-                android:text="@string/blank_string" />
-
-            <!-- day unit -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="left"
+                android:gravity="center"
                 android:textSize="@dimen/normal_font_size"
                 android:text="@string/days" />
 
             <!-- blank month -->
             <TextView
-                android:id="@+id/blank_left_months"
+                android:id="@+id/left_days"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:gravity="right"
-                android:textSize="@dimen/normal_font_size"
-                android:text="@string/blank_string" />
-
-            <!-- month unit -->
-            <TextView
-
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="right"
-                android:textSize="@dimen/normal_font_size"
-                android:text="@string/months" />
-
-            <!-- blank day -->
-            <TextView
-                android:id="@+id/blank_left_days"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="right"
-                android:textSize="@dimen/normal_font_size"
-                android:text="@string/blank_string" />
-
-            <!-- day unit -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="left"
+                android:gravity="center"
                 android:textSize="@dimen/normal_font_size"
                 android:text="@string/days" />
+
+
         </TableRow>
 
 
@@ -171,7 +119,7 @@
                 android:fontFamily="@font/notosanskr_black"
                 android:textSize="@dimen/table_title_size"
                 android:gravity="center"
-                android:layout_span="4"
+
                 android:text="@string/used_litters" />
             <TextView
                 android:layout_width="wrap_content"
@@ -179,7 +127,7 @@
                 android:fontFamily="@font/notosanskr_black"
                 android:textSize="@dimen/table_title_size"
                 android:gravity="center"
-                android:layout_span="4"
+
                 android:text="@string/left_litters" />
         </TableRow>
 
@@ -187,35 +135,18 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <TextView
-                android:id="@+id/blank_used_litters"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:gravity="right"
+                android:gravity="center"
                 android:textSize="@dimen/normal_font_size"
-                android:layout_span="2"
-                android:text="@string/blank_string" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="left"
-                android:textSize="@dimen/normal_font_size"
-                android:layout_span="2"
+                android:id="@+id/used_litters"
                 android:text="@string/litter" />
             <TextView
-                android:id="@+id/blank_left_flow_litter"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:gravity="right"
+                android:gravity="center"
+                android:id="@+id/left_litters"
                 android:textSize="@dimen/normal_font_size"
-                android:layout_span="2"
-                android:text="@string/blank_string" />
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="left"
-                android:textSize="@dimen/normal_font_size"
-                android:layout_span="2"
                 android:text="@string/litter" />
         </TableRow>
 

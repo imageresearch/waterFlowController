@@ -485,7 +485,8 @@ public class MainActivity extends AppCompatActivity {
                 returnVal = period.getDays();
                 break;
             case 1 :
-                returnVal = period.getMonths();
+                returnVal = period.getYears();
+                returnVal = period.getMonths() + returnVal * 12;
                 break;
         }
         return returnVal;
@@ -532,7 +533,7 @@ public class MainActivity extends AppCompatActivity {
                     setScanMode(ScanSettings.SCAN_MODE_LOW_POWER).
                     setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).
                     setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES).
-                    setReportDelay(0L).
+                    setReportDelay(0).
                     build();
 
             mLEScanner.startScan(
@@ -592,24 +593,25 @@ public class MainActivity extends AppCompatActivity {
         TextView expected_date_view = findViewById(R.id.expected_date);
         expected_date_view.setText(st);
 
-        TextView blank_used_month_textview = findViewById(R.id.blank_used_month);
-        blank_used_month_textview.setText(String.format("%02d", elapsed_months));
+        String month = getResources().getString(R.string.months);
+        String days = getResources().getString(R.string.days);
+        String litters = getResources().getString(R.string.litter);
+        String merged_used_days = String.format("%02d", elapsed_months) + month + " " + String.format("%02d", elapsed_days) + days;
 
-        TextView blank_used_days_textview = findViewById(R.id.blank_used_days);
-        blank_used_days_textview.setText(String.format("%02d", elapsed_days));
+        TextView used_days_textview = findViewById(R.id.used_days);
+        used_days_textview.setText(merged_used_days);
 
+        String merged_left_days = String.format("%02d", left_days) + month + " " + String.format("%02d", left_days) + days;
+        TextView left_days_textview = findViewById(R.id.left_days);
+        left_days_textview.setText(merged_left_days);
 
-        TextView blank_used_litters_textview = findViewById(R.id.blank_used_litters);
-        blank_used_litters_textview.setText(String.format("%04d", accumulated_flow_int));
+        String merged_used_litters = String.format("%04d", accumulated_flow_int) + litters;
+        TextView used_litters_textview = findViewById(R.id.used_litters);
+        used_litters_textview.setText(merged_used_litters);
 
-        TextView blank_left_months_textview = findViewById(R.id.blank_left_months);
-        blank_left_months_textview.setText(String.format("%02d", left_months));
-
-        TextView blank_left_days_textview = findViewById(R.id.blank_left_days);
-        blank_left_days_textview.setText(String.format("%02d", left_days));
-
-        TextView blank_left_flow_litter_textview = findViewById(R.id.blank_left_flow_litter);
-        blank_left_flow_litter_textview.setText(String.format("%04d", left_flow_int));
+        String merged_left_litters = String.format("%04d", left_flow_int) + litters;
+        TextView left_litters_textview = findViewById(R.id.left_litters);
+        left_litters_textview.setText(merged_left_litters);
 
         if (left_days <= 0){
             TextView expectation_date_string_prefix_textview = findViewById(R.id.expectation_date_string_prefix);
