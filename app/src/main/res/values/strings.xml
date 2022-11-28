@@ -12,6 +12,7 @@
     <string name="passed_expectation_days">일 지났습니다.</string>
     <string name="request_direct_change">바로 필터 교환이 필요합니다.</string>
     <string name="expectation_date_string">yyyy년 MM월 dd일입니다.</string>
+    <string name="expectation_date_unknown">아직 알 수 없습니다.</string>
     <string name="blank_string"> </string>
     <string name="unix_year">년</string>
     <string name="unix_month">월</string>

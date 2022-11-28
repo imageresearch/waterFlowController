@@ -24,6 +24,7 @@ import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -56,12 +57,12 @@ public class MainActivity extends AppCompatActivity {
     /*public ActivityMainBinding binding;*/
     private static final int PERMISSION_REQUEST_BLE = 1000;
 
-    private BluetoothAdapter    mBluetoothAdapter;
-    private Handler             mHandler;
-    private BluetoothLeScanner  mLEScanner;
+    private BluetoothAdapter    mBluetoothAdapter = null;
+    private Handler             mHandler = null;
 
-    List<BLEDeviceItem> BLEDeviceItemList = new ArrayList<>();
-    private BluetoothGatt mGatt;
+
+    List<BLEDeviceItem>         BLEDeviceItemList = new ArrayList<>();
+
 
     /***************************************************************************
      * Request Bluetooth LE enabling
@@ -74,11 +75,6 @@ public class MainActivity extends AppCompatActivity {
     public String SERVICE_UUID_STRING = "18424398-7cbc-11e9-8f9e-2a86e4085a59";
     public String CHARACTERISTIC_UUID_STRING = "2d86686a-53dc-25b3-0c4a-f0e10c8dee20";
 
-    BluetoothGattCharacteristic mIOCharacteristic = null;
-
-
-    ImageView waterflow_status;
-
 
     /***************************************************************************
      *
@@ -88,6 +84,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+
+
         if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
             Toast.makeText(
                     this,
@@ -96,9 +94,34 @@ public class MainActivity extends AppCompatActivity {
             finish();
         }
 
-        waterflow_status = findViewById(R.id.waterflow_status);
+        final BluetoothManager bluetoothManager =
+                (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+        mBluetoothAdapter = bluetoothManager.getAdapter();
+
         checkPermission();
+
+        mHandler = new Handler();       // Initialize the message handler
+        if (mHandler == null){
+            Log.e (TAG, "Fail to initialize the message handler");
+            finish();
+        }
+
+        requestBLEActivate();
         initializeContent();
+    }
+
+    @Override
+    public void onResume(){
+        Log.d (TAG, "MainActivity Resumed");
+        requestBLEActivate();
+        super.onResume();
+    }
+
+    @Override
+    public void onPause(){
+        Log.d (TAG, "MainActivity Paused");
+        scanLeDevice(false);
+        super.onPause();
     }
 
 
@@ -137,21 +160,23 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    /***************************************************************************
+     *
+     *
+     * @param requestCode
+     * @param resultCode
+     * @param data
+     **************************************************************************/
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_ENABLE_BT) {
             if (resultCode == Activity.RESULT_OK) {
-                //mLEScanner = mBluetoothAdapter.getBluetoothLeScanner();
                 scanLeDevice(true);
                 return;
             }
-
-            Toast.makeText(
-                        this, "취소했습니다",
-                        Toast.LENGTH_LONG).show();
-            finish();
-
+            else
+                finish();
         }
     }
 
@@ -176,37 +201,40 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-
-    /***************************************************************************
-     * Initializes a bluetooth adapter on the mobile device.
-     * For API level 18 and above, The app gets a reference to BluetoothAdapter
-     * through BluetoothManager.
-     *
-     **************************************************************************/
-    private void initializeBluetoothAdapter(){
-        if (mHandler != null)
-            mHandler = null;    // To re-initialize the handler
-        mHandler = new Handler();
-
-        final BluetoothManager bluetoothManager =
-                (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
-        mBluetoothAdapter = bluetoothManager.getAdapter();
-    }
-
     @SuppressLint("MissingPermission")
     private void requestBLEActivate(){
-
-        initializeBluetoothAdapter();
 
         if (mBluetoothAdapter != null && mBluetoothAdapter.isEnabled()) {
             scanLeDevice(true);
         }
         else {
-            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(
-                    enableBtIntent,
-                    REQUEST_ENABLE_BT
-            );
+
+            AlertDialog.Builder alertDialogBuilder;
+            alertDialogBuilder = new AlertDialog.Builder(this);
+
+            alertDialogBuilder.setTitle(R.string.permission_ble_not_connected_alert_title);
+            alertDialogBuilder
+                    .setMessage(R.string.permission_blue_not_connected)
+                    .setCancelable(false)
+                    .setPositiveButton(R.string.OK, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            dialogInterface.dismiss();
+                            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                            startActivityForResult(
+                                    enableBtIntent,
+                                    REQUEST_ENABLE_BT);
+                        }
+                    })
+                    .setNegativeButton(R.string.CANCEL, (dialog, id) -> {
+                        finish();
+                    });
+
+
+            final AlertDialog alertDialog = alertDialogBuilder.create();
+            alertDialog.show();
+
+
         }
     }
 
@@ -249,7 +277,7 @@ public class MainActivity extends AppCompatActivity {
         String[] permissions;
 
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S){
             permissions = new String[]{
                     Manifest.permission.BLUETOOTH_SCAN,
                     Manifest.permission.BLUETOOTH_CONNECT
@@ -375,35 +403,6 @@ public class MainActivity extends AppCompatActivity {
         return bytes;
     }
 
-    @SuppressLint("MissingPermission")
-    private void scanLeDevice(final boolean enable) {
-
-        if (!enable){
-            if (mLEScanner != null)
-                mLEScanner.stopScan(mLeScanCallback);
-            Log.i(TAG, "=============> Stop scanning BLE devices");
-            return;
-        }
-
-        mLEScanner = mBluetoothAdapter.getBluetoothLeScanner();
-
-        List<ScanFilter> filters = new ArrayList<>();
-        ScanSettings scanSettings = new ScanSettings.
-                    Builder().
-                    setScanMode(ScanSettings.SCAN_MODE_LOW_POWER).
-                    setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).
-                    setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES).
-                    setReportDelay(0).
-                    build();
-
-        mLEScanner.startScan(
-                    filters,
-                    scanSettings,
-                    mLeScanCallback);
-        Log.i(TAG, "=============> Start Scanning BLE devices ");
-    }
-
-
     public void UpdateContent(
                     byte[] filter_update_date,
                     byte[] filter_capacity,
@@ -470,10 +469,10 @@ public class MainActivity extends AppCompatActivity {
             expected_date_view.setText(R.string.request_direct_change);
 
             Glide
-                    .with(this)
-                    .load(R.drawable.short_water_flow)
-                    .skipMemoryCache(true)
-                    .into(waterflow_status);
+            .with(this)
+            .load(R.drawable.short_water_flow)
+            .skipMemoryCache(true)
+            .into((ImageView)findViewById(R.id.waterflow_status));
 
         }
 
@@ -483,14 +482,11 @@ public class MainActivity extends AppCompatActivity {
      *
      **************************************************************************/
     private void initializeContent(){
-
         Glide
-                .with(this)
-                .load(R.drawable.normal_water_flow)
-                .skipMemoryCache(true)
-                .into(waterflow_status);
-
-
+        .with(this)
+        .load(R.drawable.normal_water_flow)
+        .skipMemoryCache(true)
+        .into((ImageView)findViewById(R.id.waterflow_status));
     }
 
 
@@ -515,7 +511,10 @@ public class MainActivity extends AppCompatActivity {
      *  the device is connected only when the firmware needs to be updated.
      **************************************************************************/
     @SuppressLint("MissingPermission")
-    private void notifyConnected(boolean bDisplayMessage){
+    private void notifyConnected(
+                        BluetoothGatt               gatt,
+                        BluetoothGattCharacteristic characteristic,
+                        boolean                     bDisplayMessage){
         if (bDisplayMessage)
             Toast.makeText (
                 MainActivity.this,
@@ -523,7 +522,8 @@ public class MainActivity extends AppCompatActivity {
                 Toast.LENGTH_SHORT).show();
 
         writeCharacteristic(
-                mIOCharacteristic,
+                gatt,
+                characteristic,
                 0xA1,
                 convertUnixTimeStamp2Bytes(getCurrentUnixTimeStamp()));
     }
@@ -540,6 +540,388 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+
+    @SuppressLint("MissingPermission")
+    public void connectToDevice(
+            BluetoothDevice     deviceToConnect){
+
+        if (deviceToConnect == null){
+            Log.e (TAG, "Device to be connected is not specified");
+            return;
+        }
+
+        scanLeDevice(false);
+
+        BluetoothGatt gatt = deviceToConnect.connectGatt(
+                            this,
+                            true,
+                            gattCallback);
+
+        if (gatt == null) {
+            Log.e (TAG, "Fail to connect the GATT.");
+            return;
+        }
+
+
+        for (BLEDeviceItem bleDeviceItem:BLEDeviceItemList) {
+
+            String device_name = bleDeviceItem.getDeviceName();
+            String device_name_to_connect = deviceToConnect.getName();
+            if (device_name != null){
+                if (device_name.equals(device_name_to_connect))
+                    bleDeviceItem.setConnected(true);
+            }
+        }
+    }
+
+    /***************************************************************************
+     * Write the data with the command to a specific characteristic
+     * When finishing writing the data, the callback (onCharacteristicWrite)of
+     * BluetoothGattCallback will be called
+     * @param characteristic
+     * @param command
+     * @param data
+     **************************************************************************/
+    @SuppressLint("MissingPermission")
+    public void writeCharacteristic(
+            BluetoothGatt               gatt,
+            BluetoothGattCharacteristic characteristic,
+            int                         command,
+            byte[]                      data) {
+
+        if (gatt == null) {
+            Log.e (TAG, "GATT is not specified. Check it.");
+            return;
+        }
+
+        if (characteristic == null){
+            Log.e (TAG, "No Characteristic has been specified.");
+            return;
+        }
+
+        byte[] totalBytes = new byte[1 + ((data != null && data.length != 0)? data.length:0)];
+        totalBytes[0] = (byte) command;
+
+        if (data != null && data.length != 0)
+            System.arraycopy(data, 0, totalBytes, 1, data.length);
+
+        characteristic.setValue(totalBytes);
+        gatt.writeCharacteristic(characteristic);
+    }
+
+
+
+    @SuppressLint("MissingPermission")
+    private void scanLeDevice(final boolean enable) {
+
+        BluetoothLeScanner  mLEScanner = null;
+
+        if (mBluetoothAdapter == null){
+            Log.e (TAG, "Bluetooth Adapter is not specified. Check it.");
+            return;
+        }
+
+        mLEScanner = mBluetoothAdapter.getBluetoothLeScanner();
+        if (mLEScanner == null){
+            Log.e (TAG, "Fail to get the bluetooth scanner");
+            return;
+        }
+
+        if (!enable){
+            mLEScanner.stopScan(mLeScanCallback);
+            mLEScanner.flushPendingScanResults(mLeScanCallback);
+            Log.i(TAG, "=============> Stop scanning BLE devices");
+            return;
+        }
+
+        List<ScanFilter> filters = new ArrayList<>();
+        ScanSettings scanSettings = new ScanSettings.
+                Builder().
+                setScanMode(ScanSettings.SCAN_MODE_LOW_POWER).
+                setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).
+                setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES).
+                setReportDelay(0).
+                build();
+
+        mLEScanner.startScan(
+                filters,
+                scanSettings,
+                mLeScanCallback);
+        Log.i(TAG, "=============> Start Scanning BLE devices ");
+    }
+
+
+    /***************************************************************************
+     * BLE GATT Callback
+     *
+     *
+     **************************************************************************/
+    private final BluetoothGattCallback gattCallback = new BluetoothGattCallback() {
+        @Override
+        public void onPhyUpdate(
+                        BluetoothGatt   gatt,
+                        int             txPhy,
+                        int             rxPhy,
+                        int             status) {
+            super.onPhyUpdate(gatt, txPhy, rxPhy, status);
+        }
+
+        @Override
+        public void onPhyRead(
+                        BluetoothGatt   gatt,
+                        int             txPhy,
+                        int             rxPhy,
+                        int             status) {
+            super.onPhyRead(gatt, txPhy, rxPhy, status);
+        }
+
+
+        /***********************************************************************
+         * Called when the connection status has changed
+         *
+         * @param gatt          The GATT
+         * @param status        The previous status
+         * @param newState      the new status
+         **********************************************************************/
+        @SuppressLint("MissingPermission")
+        @Override
+        public void onConnectionStateChange(
+                BluetoothGatt       gatt,
+                int                 status,
+                int                 newState) {
+            super.onConnectionStateChange(gatt, status, newState);
+
+            final String GATT_TAG = "GATT";
+            Log.i (
+                    GATT_TAG,
+                    "Connection State changed (Previous Status : " +
+                            status +
+                            " New Status : " +
+                            newState +
+                            ")");
+
+            switch (newState){
+                case BluetoothProfile.STATE_CONNECTED:
+                    Log.i (GATT_TAG, "(STATE_CONNECTED)");
+                    gatt.discoverServices();    // Now, try to find the services
+                                                // Don't notify that we've connected
+                                                // the BLE device yet.
+                                                // It's will be notified after
+                                                // all characteristics we need are
+                                                // found
+                    break;
+                case BluetoothProfile.STATE_DISCONNECTED:
+                    Log.i(GATT_TAG, "(STATE_DISCONNECTED)");
+
+                    for (BLEDeviceItem deviceItem:BLEDeviceItemList){
+
+                        if (gatt.getDevice().getAddress().equals(deviceItem.deviceMac) &&
+                            gatt.getDevice().getName().equals(deviceItem.deviceName))
+                            deviceItem.setConnected(false);
+                    }
+                    mHandler.post(() -> notifyDisconnected(false));
+                    break;
+
+                default:
+                    Log.i(GATT_TAG, "(Some other state)");
+                    break;
+            }
+        }
+
+        /***********************************************************************
+         *  Called when a service has been discovered
+         *
+         * @param gatt      The GATT
+         * @param status    The status when a new service has been discovered.
+         **********************************************************************/
+        @SuppressLint("MissingPermission")
+        @Override
+        public void onServicesDiscovered(BluetoothGatt gatt, int status) {
+            super.onServicesDiscovered(gatt, status);
+
+            final String GATT_TAG = "GATT";
+
+            if (status != BluetoothGatt.GATT_SUCCESS) {
+                Log.e (GATT_TAG, "Fail to discover the service");
+                return;
+            }
+
+            List<BluetoothGattService> services = gatt.getServices();
+
+            for (BluetoothGattService service: services){
+                Log.d(
+                    GATT_TAG,
+                    "Service UUID : " + service.getUuid().toString());
+                if (!service.getUuid().toString().equals(SERVICE_UUID_STRING))
+                    continue;   // Try to find the valid service only
+
+                Log.i(
+                    GATT_TAG,
+                    "==> Found the service we want (" + service.getUuid().toString() + ")");
+
+                List<BluetoothGattCharacteristic> characteristics = service.getCharacteristics();
+                for (BluetoothGattCharacteristic characteristic: characteristics){
+                    Log.d(GATT_TAG, "Characteristic UUID : " + characteristic.getUuid().toString());
+
+                    if (characteristic.getUuid().toString().equals(CHARACTERISTIC_UUID_STRING)) {
+                        Log.i(
+                            GATT_TAG,
+                            "==> Found the characteristic we want (" + characteristic.getUuid().toString() + ")");
+                        mHandler.post(() -> notifyConnected(gatt, characteristic, false));
+                    }
+                }
+            }
+        }
+
+
+        /***********************************************************************
+         *  Notes
+         *      After receiving the ACK response from the target device,
+         *      we'll disconnect the GATT and sequentially the callback for
+         *      the connection state will be called since its status has
+         *      changed.
+         *      Therefore, we don't have to call notifyDisconnected directly.
+         *
+         * @param gatt              The GATT handler
+         * @param characteristic    The characteristic
+         * @param status            The new status
+         **********************************************************************/
+        @SuppressLint("MissingPermission")
+        @Override
+        public void onCharacteristicRead(
+                BluetoothGatt               gatt,
+                BluetoothGattCharacteristic characteristic,
+                int                         status) {
+
+            super.onCharacteristicRead(gatt, characteristic, status);
+
+            Log.d("onCharacteristicRead", characteristic.toString());
+
+            byte[] newValue = characteristic.getValue();
+
+            if (newValue == null) {
+                Log.e(TAG, "Null Data Received.... Check the H/W");
+                return;
+            }
+
+            if (characteristic.getUuid().toString().equals(CHARACTERISTIC_UUID_STRING)) {
+                switch(newValue[0]){
+                    case (byte)0xA1 :
+                        switch (newValue[1]){
+                            case (byte)0x1 :
+                                gatt.disconnect(); // see the comment
+                                break;
+                            default :
+                                // Todo : Add what to do
+                                //  when we've got the failure
+                                break;
+                        }
+                        break;
+                    case (byte)0xA4 :
+                        switch (newValue[1]){
+                            case (byte)0x01 :
+                                gatt.disconnect(); // see the comment
+                                break;
+
+                            default :
+                                // Todo : Add what to do
+                                //  when we've got the failure
+                                break;
+                        }
+                }
+            }
+        }
+
+
+        /***********************************************************************
+         * Called when the write process has been finished.
+         * we should read the corresponding characteristic to get the real
+         * device response.
+         * Note that the callback for readCharacteristic will be called
+         *
+         * @param gatt              The GATT
+         * @param characteristic    The characteristic
+         * @param status            The status
+         **********************************************************************/
+        @SuppressLint("MissingPermission")
+        @Override
+        public void onCharacteristicWrite(
+                BluetoothGatt               gatt,
+                BluetoothGattCharacteristic characteristic,
+                int                         status) {
+            super.onCharacteristicWrite(
+                    gatt,
+                    characteristic,
+                    status);
+            final String GATT_TAG = "GATT";
+            if (status != BluetoothGatt.GATT_SUCCESS) {
+                Log.e (GATT_TAG, "Fail to write data on Characteristic.");
+                return;
+            }
+
+            Log.d (GATT_TAG, "Success to write data on Characteristic.");
+            Log.i (GATT_TAG, "Now, we try to read the characteristic.");
+            //mGatt.readCharacteristic(characteristic);
+            gatt.readCharacteristic(characteristic);
+        }
+
+        /***********************************************************************
+         * Called when you are trying to send data using writeCharacteristic
+         * and the BLE device responds with some value.
+         *
+         **********************************************************************/
+        @Override
+        public void onCharacteristicChanged(
+                BluetoothGatt gatt,
+                BluetoothGattCharacteristic characteristic) {
+            super.onCharacteristicChanged(gatt, characteristic);
+        }
+
+        /***********************************************************************
+         * Used to read the configuration settings for the BLE device.
+         * Some manufactures might require to send some data to the BLE device
+         * and acknowledge it by reading,
+         * before you can connect to the BLE device.
+         *
+         **********************************************************************/
+        @Override
+        public void onDescriptorRead(
+                BluetoothGatt gatt,
+                BluetoothGattDescriptor descriptor,
+                int status) {
+            super.onDescriptorRead(gatt, descriptor, status);
+        }
+
+        @Override
+        public void onDescriptorWrite(
+                BluetoothGatt           gatt,
+                BluetoothGattDescriptor descriptor,
+                int                     status) {
+            super.onDescriptorWrite(gatt, descriptor, status);
+        }
+
+        @Override
+        public void onReliableWriteCompleted(BluetoothGatt gatt, int status) {
+            super.onReliableWriteCompleted(gatt, status);
+        }
+
+        @Override
+        public void onReadRemoteRssi(BluetoothGatt gatt, int rssi, int status) {
+            super.onReadRemoteRssi(gatt, rssi, status);
+        }
+
+        @Override
+        public void onMtuChanged(BluetoothGatt gatt, int mtu, int status) {
+            super.onMtuChanged(gatt, mtu, status);
+        }
+
+        @Override
+        public void onServiceChanged(@NonNull BluetoothGatt gatt) {
+            super.onServiceChanged(gatt);
+        }
+    };
+
+
     /***************************************************************************
      * Scan callback
      **************************************************************************/
@@ -554,8 +936,8 @@ public class MainActivity extends AppCompatActivity {
             final String BLE_DEVICE_TARGET_NAME="FLOW";
 
             if (deviceName != null &&
-                deviceName.length() >= 5 &&
-                deviceName.substring(0, 4).equals(BLE_DEVICE_TARGET_NAME)) {
+                    deviceName.length() >= 5 &&
+                    deviceName.substring(0, 4).equals(BLE_DEVICE_TARGET_NAME)) {
 
                 String deviceMac = btDevice.getAddress();
                 Log.d ("Scan Callback", "Found device : " + deviceName +"(Name) " + deviceMac + "(MAC)");
@@ -621,15 +1003,15 @@ public class MainActivity extends AppCompatActivity {
                         mHandler.post(() -> showFilterUpdateAlertDialog());
                     else
                         mHandler.post(() -> UpdateContent(
-                                                date_bytes,
-                                                flow_capacity,
-                                                accumulated_flow));
+                                date_bytes,
+                                flow_capacity,
+                                accumulated_flow));
 
                 } else {
 
                     for (BLEDeviceItem item : BLEDeviceItemList) {
                         if (item.getDeviceMac().equals(deviceMac)) {    // we found the same device
-                                                                        // and we update the field values
+                            // and we update the field values
 
                             item.setFilter_capacity(flow_capacity);
                             item.setFilter_date(date_bytes);
@@ -639,9 +1021,9 @@ public class MainActivity extends AppCompatActivity {
                                 mHandler.post(()->showFilterUpdateAlertDialog());
                             else
                                 mHandler.post(() -> UpdateContent(
-                                    date_bytes,
-                                    flow_capacity,
-                                    accumulated_flow));
+                                        date_bytes,
+                                        flow_capacity,
+                                        accumulated_flow));
                             return;
                         }
                     }
@@ -680,258 +1062,5 @@ public class MainActivity extends AppCompatActivity {
     };
 
 
-    @SuppressLint("MissingPermission")
-    public void connectToDevice(BluetoothDevice deviceToConnect){
-        if (mGatt != null)
-            mGatt = null;
-
-        scanLeDevice(false);
-
-        mGatt = deviceToConnect.connectGatt(
-                    this,
-                    true,
-                    gattCallback);
-
-        for (BLEDeviceItem bleDeviceItem:BLEDeviceItemList) {
-
-            String device_name = bleDeviceItem.getDeviceName();
-            String device_name_to_connect = deviceToConnect.getName();
-            if (device_name != null){
-                if (device_name.equals(device_name_to_connect))
-                    bleDeviceItem.setConnected(true);
-            }
-        }
-    }
-
-    private final BluetoothGattCallback gattCallback = new BluetoothGattCallback() {
-        @Override
-        public void onPhyUpdate(BluetoothGatt gatt, int txPhy, int rxPhy, int status) {
-            super.onPhyUpdate(gatt, txPhy, rxPhy, status);
-        }
-
-        @Override
-        public void onPhyRead(BluetoothGatt gatt, int txPhy, int rxPhy, int status) {
-            super.onPhyRead(gatt, txPhy, rxPhy, status);
-        }
-
-
-        @SuppressLint("MissingPermission")
-        @Override
-        public void onConnectionStateChange(
-                BluetoothGatt       gatt,
-                int                 status,
-                int                 newState) {
-            super.onConnectionStateChange(gatt, status, newState);
-            Log.i ("onConnectionStateChange", "Status : " + status);
-            switch (newState){
-                case BluetoothProfile.STATE_CONNECTED:
-                    Log.i ("gattCallback", "STATE_CONNECTED");
-                    gatt.discoverServices();    // Now, try to find the services
-                                                // Don't notify that we've connected
-                                                // the BLE device yet.
-                                                // It's will be notified after
-                                                // all characteristics we need are
-                                                // found
-                    break;
-                case BluetoothProfile.STATE_DISCONNECTED:
-                    Log.e("gattCallback", "STATE_DISCONNECTED");
-
-                    for (BLEDeviceItem deviceItem:BLEDeviceItemList){
-
-                        if (mGatt.getDevice().getAddress().equals(deviceItem.deviceMac) &&
-                                mGatt.getDevice().getName().equals(deviceItem.deviceName))
-                            deviceItem.setConnected(false);
-                    }
-                    mHandler.post(() -> notifyDisconnected(false));
-                    break;
-                default:
-                    Log.e("gattCallback", "STATE_OTHER");
-            }
-        }
-
-        @SuppressLint("MissingPermission")
-        @Override
-        public void onServicesDiscovered(BluetoothGatt gatt, int status) {
-            super.onServicesDiscovered(gatt, status);
-
-            if (status != BluetoothGatt.GATT_SUCCESS)
-                return;
-
-
-            List<BluetoothGattService> services = gatt.getServices();
-            Log.i("onServicesDiscovered", services.toString());
-
-
-
-            for (BluetoothGattService service: services){
-                Log.i("Service UUID : ", service.getUuid().toString());
-                if (!service.getUuid().toString().equals(SERVICE_UUID_STRING))
-                    continue;   // Try to find the valid service only
-
-                List<BluetoothGattCharacteristic> characteristics = service.getCharacteristics();
-
-                for (BluetoothGattCharacteristic characteristic: characteristics){
-                    Log.i("Characteristic UUID :", characteristic.getUuid().toString());
-
-                    if (characteristic.getUuid().toString().equals(CHARACTERISTIC_UUID_STRING)) {
-                        mIOCharacteristic = characteristic;
-                        mHandler.post(() -> notifyConnected(false));
-
-                    }
-                }
-            }
-        }
-
-
-        @SuppressLint("MissingPermission")
-        @Override
-        public void onCharacteristicRead(
-                BluetoothGatt gatt,
-                BluetoothGattCharacteristic characteristic,
-                int status) {
-            super.onCharacteristicRead(gatt, characteristic, status);
-
-            Log.i("onCharacteristicRead", characteristic.toString());
-
-            byte[] newValue = characteristic.getValue();
-
-            if (newValue == null) {
-                Log.e(TAG, "Null Data Received.... Check the H/W");
-                return;
-            }
-
-            if (characteristic == mIOCharacteristic){
-
-                switch(newValue[0]){
-                    case (byte)0xA1 :
-                        switch (newValue[1]){
-                            case (byte)0x1 :
-                                mGatt.disconnect();
-                                //mHandler.post(()->notifyDisconnected(false));
-                                break;
-                        }
-                        break;
-                    case (byte)0xA4 :
-                        switch (newValue[1]){
-                            case (byte)0x01 :
-                                mGatt.disconnect();
-                                //mHandler.post(()->notifyDisconnected(false));
-                                break;
-                        }
-                }
-
-            }
-        }
-
-
-        /***********************************************************************
-         * Called when the write process has been finished.
-         * we should read the corresponding characteristic to get the real
-         * device response.
-         * Note that the callback for readCharactersitci will be called
-         *
-         * @param gatt
-         * @param characteristic
-         * @param status
-         **********************************************************************/
-        @SuppressLint("MissingPermission")
-        @Override
-        public void onCharacteristicWrite(
-                BluetoothGatt               gatt,
-                BluetoothGattCharacteristic characteristic,
-                int                         status) {
-            super.onCharacteristicWrite(
-                    gatt,
-                    characteristic,
-                    status);
-            if (status == BluetoothGatt.GATT_SUCCESS)
-                mGatt.readCharacteristic(characteristic);
-        }
-
-        /***********************************************************************
-         * Called when you are trying to send data using writeCharacteristic
-         * and the BLE device responds with some value.
-         *
-         **********************************************************************/
-        @Override
-        public void onCharacteristicChanged(
-                BluetoothGatt gatt,
-                BluetoothGattCharacteristic characteristic) {
-            super.onCharacteristicChanged(gatt, characteristic);
-        }
-
-        /***********************************************************************
-         * Used to read the configuration settings for the BLE device.
-         * Some manufactures might require to send some data to the BLE device
-         * and acknowledge it by reading,
-         * before you can connect to the BLE device.
-         *
-         **********************************************************************/
-        @Override
-        public void onDescriptorRead(
-                BluetoothGatt gatt,
-                BluetoothGattDescriptor descriptor,
-                int status) {
-            super.onDescriptorRead(gatt, descriptor, status);
-        }
-
-        @Override
-        public void onDescriptorWrite(
-                BluetoothGatt           gatt,
-                BluetoothGattDescriptor descriptor,
-                int                     status) {
-            super.onDescriptorWrite(gatt, descriptor, status);
-        }
-
-        @Override
-        public void onReliableWriteCompleted(BluetoothGatt gatt, int status) {
-            super.onReliableWriteCompleted(gatt, status);
-        }
-
-        @Override
-        public void onReadRemoteRssi(BluetoothGatt gatt, int rssi, int status) {
-            super.onReadRemoteRssi(gatt, rssi, status);
-        }
-
-        @Override
-        public void onMtuChanged(BluetoothGatt gatt, int mtu, int status) {
-            super.onMtuChanged(gatt, mtu, status);
-        }
-
-        @Override
-        public void onServiceChanged(@NonNull BluetoothGatt gatt) {
-            super.onServiceChanged(gatt);
-        }
-    };
-
-
-    /***************************************************************************
-     * Write the data with the command to a specific characteristic
-     * When finishing writing the data, the callback (onCharacteristicWrite)of
-     * BluetoothGattCallback will be called
-     * @param characteristic
-     * @param command
-     * @param data
-     **************************************************************************/
-    @SuppressLint("MissingPermission")
-    public void writeCharacteristic(
-                        BluetoothGattCharacteristic characteristic,
-                        int     command,
-                        byte[]  data) {
-
-        if (mGatt == null)
-            return;
-
-        byte[] totalBytes = new byte[1 + ((data != null && data.length != 0)? data.length:0)];
-        totalBytes[0] = (byte) command;
-
-        if (data != null && data.length != 0)
-            System.arraycopy(data, 0, totalBytes, 1, data.length);
-
-
-        mIOCharacteristic.setValue(totalBytes);
-        mGatt.writeCharacteristic(mIOCharacteristic);
-
-    }
 
 }

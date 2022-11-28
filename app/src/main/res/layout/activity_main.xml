@@ -40,7 +40,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:textSize="@dimen/sub_title_size"
-                android:text="@string/expectation_date_string" />
+                android:text="@string/expectation_date_unknown" />
         </TableRow>
     </TableLayout>
 
