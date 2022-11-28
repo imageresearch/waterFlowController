@@ -12,7 +12,7 @@
         android:fontFamily="@font/notosanskr_bold"
         android:paddingLeft="20dp"
         android:paddingTop="10dp"
-        android:text="@string/available_device" />
+        android:text="@string/unavailable_device" />
     <ListView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

@@ -3,6 +3,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:layout_marginRight="10dp"
+    android:layout_marginLeft="10dp"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
 
@@ -10,6 +12,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="38dp"
+        android:layout_marginLeft="30dp"
+        android:layout_marginRight="10dp"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent"
@@ -71,9 +75,11 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+
                 android:fontFamily="@font/notosanskr_black"
                 android:textSize="@dimen/table_title_size"
                 android:gravity="center"
+                android:background="@drawable/table_border"
                 android:text="@string/used_days" />
             <TextView
                 android:layout_width="wrap_content"
@@ -81,6 +87,7 @@
                 android:fontFamily="@font/notosanskr_black"
                 android:textSize="@dimen/table_title_size"
                 android:gravity="center"
+                android:background="@drawable/table_border"
                 android:text="@string/left_days" />
         </TableRow>
 
@@ -95,6 +102,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:textSize="@dimen/normal_font_size"
+                android:fontFamily="@font/notosanskr_regular"
                 android:text="@string/days" />
 
             <!-- blank month -->
@@ -104,6 +112,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:textSize="@dimen/normal_font_size"
+                android:fontFamily="@font/notosanskr_regular"
                 android:text="@string/days" />
 
 
@@ -119,7 +128,7 @@
                 android:fontFamily="@font/notosanskr_black"
                 android:textSize="@dimen/table_title_size"
                 android:gravity="center"
-
+                android:background="@drawable/table_border"
                 android:text="@string/used_litters" />
             <TextView
                 android:layout_width="wrap_content"
@@ -127,7 +136,7 @@
                 android:fontFamily="@font/notosanskr_black"
                 android:textSize="@dimen/table_title_size"
                 android:gravity="center"
-
+                android:background="@drawable/table_border"
                 android:text="@string/left_litters" />
         </TableRow>
 
@@ -139,6 +148,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:textSize="@dimen/normal_font_size"
+                android:fontFamily="@font/notosanskr_regular"
                 android:id="@+id/used_litters"
                 android:text="@string/litter" />
             <TextView
@@ -147,6 +157,8 @@
                 android:gravity="center"
                 android:id="@+id/left_litters"
                 android:textSize="@dimen/normal_font_size"
+                android:fontFamily="@font/notosanskr_regular"
+
                 android:text="@string/litter" />
         </TableRow>
 

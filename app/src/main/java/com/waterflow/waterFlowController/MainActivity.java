@@ -24,7 +24,6 @@ import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -101,12 +100,7 @@ public class MainActivity extends AppCompatActivity {
         checkPermission();
 
         mHandler = new Handler();       // Initialize the message handler
-        if (mHandler == null){
-            Log.e (TAG, "Fail to initialize the message handler");
-            finish();
-        }
 
-        requestBLEActivate();
         initializeContent();
     }
 
@@ -147,15 +141,13 @@ public class MainActivity extends AppCompatActivity {
                 builder.setTitle(R.string.permission_ble_not_connected_alert_title);
                 builder.setMessage(R.string.permission_blue_not_connected);
                 builder.setPositiveButton(android.R.string.ok, null);
-                builder.setOnDismissListener(dialogInterface -> {
-
-                });
+                builder.setOnDismissListener(dialogInterface -> finish());
 
                 builder.show();
                 return;
             }
 
-            requestBLEActivate();   // Now, Request to scan BLE
+            scanLeDevice(true);   // Now, Request to scan BLE
         }
     }
 
@@ -163,20 +155,16 @@ public class MainActivity extends AppCompatActivity {
     /***************************************************************************
      *
      *
-     * @param requestCode
-     * @param resultCode
-     * @param data
      **************************************************************************/
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_ENABLE_BT) {
-            if (resultCode == Activity.RESULT_OK) {
-                scanLeDevice(true);
-                return;
-            }
-            else
+            if (resultCode != Activity.RESULT_OK)
                 finish();
+            else{
+                checkPermission();
+            }
         }
     }
 
@@ -204,37 +192,26 @@ public class MainActivity extends AppCompatActivity {
     @SuppressLint("MissingPermission")
     private void requestBLEActivate(){
 
-        if (mBluetoothAdapter != null && mBluetoothAdapter.isEnabled()) {
-            scanLeDevice(true);
-        }
-        else {
+        if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()){
 
             AlertDialog.Builder alertDialogBuilder;
             alertDialogBuilder = new AlertDialog.Builder(this);
 
-            alertDialogBuilder.setTitle(R.string.permission_ble_not_connected_alert_title);
+            alertDialogBuilder.setTitle(R.string.unavailable_device);
             alertDialogBuilder
-                    .setMessage(R.string.permission_blue_not_connected)
+                    .setMessage(R.string.ble_not_supporting)
                     .setCancelable(false)
-                    .setPositiveButton(R.string.OK, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int i) {
-                            dialogInterface.dismiss();
-                            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                            startActivityForResult(
-                                    enableBtIntent,
-                                    REQUEST_ENABLE_BT);
-                        }
-                    })
-                    .setNegativeButton(R.string.CANCEL, (dialog, id) -> {
-                        finish();
+                    .setPositiveButton(R.string.OK, (dialogInterface, i) -> {
+                        dialogInterface.dismiss();
+                        Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                        startActivityForResult(
+                                enableBtIntent,
+                                REQUEST_ENABLE_BT);
                     });
 
 
             final AlertDialog alertDialog = alertDialogBuilder.create();
             alertDialog.show();
-
-
         }
     }
 
@@ -322,10 +299,7 @@ public class MainActivity extends AppCompatActivity {
                     arr,
                     PERMISSION_REQUEST_BLE);
         } else
-            requestBLEActivate();   // This case means that all permission
-                                    // has been activated so that we need
-                                    // no more and just go to request to
-                                    // activate BLE
+            scanLeDevice(true);
     }
 
 
@@ -355,8 +329,7 @@ public class MainActivity extends AppCompatActivity {
      *
      **************************************************************************/
     private long getCurrentUnixTimeStamp(){
-        long temp_time_stamp = System.currentTimeMillis() / 1000L;
-        return temp_time_stamp;
+        return System.currentTimeMillis() / 1000L;
     }
 
     private Date getCurrentDate(){
@@ -442,8 +415,8 @@ public class MainActivity extends AppCompatActivity {
         String month = getResources().getString(R.string.months);
         String days = getResources().getString(R.string.days);
         String litters = getResources().getString(R.string.litter);
-        String merged_used_days = String.format("%02d", elapsed_months) + month + " " + String.format("%02d", elapsed_days) + days;
 
+        String merged_used_days = String.format("%02d", elapsed_months) + month + " " + String.format("%02d", elapsed_days) + days;
         TextView used_days_textview = findViewById(R.id.used_days);
         used_days_textview.setText(merged_used_days);
 
@@ -578,9 +551,6 @@ public class MainActivity extends AppCompatActivity {
      * Write the data with the command to a specific characteristic
      * When finishing writing the data, the callback (onCharacteristicWrite)of
      * BluetoothGattCallback will be called
-     * @param characteristic
-     * @param command
-     * @param data
      **************************************************************************/
     @SuppressLint("MissingPermission")
     public void writeCharacteristic(
@@ -614,7 +584,7 @@ public class MainActivity extends AppCompatActivity {
     @SuppressLint("MissingPermission")
     private void scanLeDevice(final boolean enable) {
 
-        BluetoothLeScanner  mLEScanner = null;
+        BluetoothLeScanner  mLEScanner;
 
         if (mBluetoothAdapter == null){
             Log.e (TAG, "Bluetooth Adapter is not specified. Check it.");
@@ -807,26 +777,17 @@ public class MainActivity extends AppCompatActivity {
             if (characteristic.getUuid().toString().equals(CHARACTERISTIC_UUID_STRING)) {
                 switch(newValue[0]){
                     case (byte)0xA1 :
-                        switch (newValue[1]){
-                            case (byte)0x1 :
-                                gatt.disconnect(); // see the comment
-                                break;
-                            default :
-                                // Todo : Add what to do
-                                //  when we've got the failure
-                                break;
+                        // Todo : Add what to do
+                        //  when we've got the failure
+                        if (newValue[1] == (byte) 0x1) {
+                            gatt.disconnect(); // see the comment
                         }
                         break;
                     case (byte)0xA4 :
-                        switch (newValue[1]){
-                            case (byte)0x01 :
-                                gatt.disconnect(); // see the comment
-                                break;
-
-                            default :
-                                // Todo : Add what to do
-                                //  when we've got the failure
-                                break;
+                        // Todo : Add what to do
+                        //  when we've got the failure
+                        if (newValue[1] == (byte) 0x01) {
+                            gatt.disconnect(); // see the comment
                         }
                 }
             }
@@ -936,8 +897,7 @@ public class MainActivity extends AppCompatActivity {
             final String BLE_DEVICE_TARGET_NAME="FLOW";
 
             if (deviceName != null &&
-                    deviceName.length() >= 5 &&
-                    deviceName.substring(0, 4).equals(BLE_DEVICE_TARGET_NAME)) {
+                deviceName.startsWith(BLE_DEVICE_TARGET_NAME)) {
 
                 String deviceMac = btDevice.getAddress();
                 Log.d ("Scan Callback", "Found device : " + deviceName +"(Name) " + deviceMac + "(MAC)");
