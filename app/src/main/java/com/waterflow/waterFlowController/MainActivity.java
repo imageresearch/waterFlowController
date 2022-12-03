@@ -61,9 +61,10 @@ public class MainActivity extends AppCompatActivity {
     private Handler             mHandler = null;
 
 
-    List<BLEDeviceItem>         BLEDeviceItemList = new ArrayList<>();
-    AnimationDrawable           animationDrawable;
-
+    List<BLEDeviceItem>                 BLEDeviceItemList = new ArrayList<>();
+    private AnimationDrawable           animationDrawable = null;
+    private ImageView                   imageView = null;
+    private boolean                     bWaterShortage = false;
     /***************************************************************************
      * Request Bluetooth LE enabling
      *
@@ -102,7 +103,7 @@ public class MainActivity extends AppCompatActivity {
 
         mHandler = new Handler();       // Initialize the message handler
 
-        initializeContent();
+        initializeContent(true);
     }
 
     @Override
@@ -447,40 +448,33 @@ public class MainActivity extends AppCompatActivity {
             String finish_string = getResources().getString(R.string.passed_expectation_days);
             expectation_date_string_prefix_textview.setText(first_string + " " +  day_string + finish_string);
             expected_date_view.setText(R.string.request_direct_change);
-/*
 
-            ImageView imgView = (ImageView)findViewById(R.id.waterflow_status);
-            imgView.setImageDrawable(getResources().getDrawable(R.drawable.short_water_flow));
-            animationDrawable = (AnimationDrawable) imgView.getDrawable();
-            animationDrawable.start();
-*/
+            bWaterShortage = true;
+            initializeContent(false);
 
+        } else{
+            bWaterShortage = false;
+            initializeContent(true);
         }
+
 
     }
 
     /***************************************************************************
      *
      **************************************************************************/
-    private void initializeContent(){
-/*
-        Glide
-        .with(this)
-        .load(R.drawable.normal_water_flow)
-        .skipMemoryCache(true)
-        .into((ImageView)findViewById(R.id.waterflow_status));
-*/
+    private void initializeContent(boolean bNormal){
+        imageView = findViewById(R.id.waterflow_status);
+        animationDrawable = (AnimationDrawable) imageView.getDrawable();
+        if (bWaterShortage == bNormal) {
+            imageView.setImageDrawable(
+                    bNormal?    getResources().getDrawable(R.drawable.normal_water_flow):
+                                getResources().getDrawable(R.drawable.short_water_flow));
+            bWaterShortage = !bNormal;
+        }
 
-        ImageView imgView = (ImageView)findViewById(R.id.waterflow_status);
-        imgView.setImageDrawable(getResources().getDrawable(R.drawable.short_water_flow));
-        animationDrawable = (AnimationDrawable) imgView.getDrawable();
-        animationDrawable.start();
-/*
-
-        ImageView imgView = (ImageView)findViewById(R.id.waterflow_status);
-        animationDrawable = (AnimationDrawable) imgView.getDrawable();
-        animationDrawable.start();
-*/
+        if (!animationDrawable.isRunning())
+            animationDrawable.start();
     }
 
 
