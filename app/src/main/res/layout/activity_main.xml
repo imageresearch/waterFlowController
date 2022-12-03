@@ -1,95 +1,104 @@
-<androidx.appcompat.widget.LinearLayoutCompat
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:layout_marginRight="10dp"
     android:layout_marginLeft="10dp"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    android:layout_marginTop="20dp"
+    android:layout_marginRight="10dp"
+    android:layout_marginBottom="20dp">
 
-
-    <TableLayout
-        android:layout_width="match_parent"
+    <TextView
+        android:id="@+id/expectation_date_string_prefix"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="38dp"
-        android:layout_marginLeft="30dp"
-        android:layout_marginRight="10dp"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
+        android:layout_marginTop="30dp"
+        android:fontFamily="@font/notosanskr_bold"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:text="@string/expectation_date_string_prefix"
+        android:textSize="@dimen/table_exchange_size"
+        app:layout_constraintBaseline_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/expected_date"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/expected_date"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="@string/expectation_date_unknown"
+        android:textSize="@dimen/sub_title_size"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/expectation_date_string_prefix" />
+
+    <!--
+    app:layout_constraintBottom_toTopOf="@+id/textView"
+    app:layout_constraintEnd_toEndOf="@+id/textView"
+    app:layout_constraintStart_toEndOf="@+id/textView"
+        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintTop_toTopOf="parent"
-        android:stretchColumns="*">
-
-        <TableRow
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <TextView
-                android:id="@+id/expectation_date_string_prefix"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:textSize="@dimen/table_exchange_size"
-
-                android:fontFamily="@font/notosanskr_bold"
-                android:text="@string/expectation_date_string_prefix" />
-        </TableRow>
-
-        <TableRow
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <TextView
-                android:id="@+id/expected_date"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:textSize="@dimen/sub_title_size"
-                android:text="@string/expectation_date_unknown" />
-        </TableRow>
-    </TableLayout>
-
+        app:layout_constraintVertical_bias="0.5"
+        app:layout_constraintBottom_toTopOf=""
+-->
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/waterflow_status"
-        android:layout_width="wrap_content"
-        android:layout_height="150dp"
-        android:layout_gravity="center"
-        android:layout_marginTop="15dp"
-        android:layout_marginBottom="15dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="80dp"
+        android:layout_marginStart="80dp"
+
         android:adjustViewBounds="true"
-        android:scaleType="fitCenter"
-        android:src="@drawable/normal_water_flow"/>
+        android:foregroundGravity="center"
+        android:src="@drawable/normal_water_flow"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.4" />
 
     <!-- Used / Left days -->
+    <!--app:layout_constraintTop_toBottomOf="@id/waterflow_status" -->
     <TableLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="8dp"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginBottom="30dp"
+        android:shrinkColumns="*"
         android:stretchColumns="*"
-        android:shrinkColumns="*">
+        app:layout_constraintBaseline_toBottomOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent">
 
         <TableRow
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
 
-                android:fontFamily="@font/notosanskr_black"
-                android:textSize="@dimen/table_title_size"
-                android:gravity="center"
                 android:background="@drawable/table_border"
-                android:text="@string/used_days" />
+                android:fontFamily="@font/notosanskr_black"
+                android:gravity="center"
+                android:text="@string/used_days"
+                android:textSize="@dimen/table_title_size" />
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:fontFamily="@font/notosanskr_black"
-                android:textSize="@dimen/table_title_size"
-                android:gravity="center"
                 android:background="@drawable/table_border"
-                android:text="@string/left_days" />
+                android:fontFamily="@font/notosanskr_black"
+                android:gravity="center"
+                android:text="@string/left_days"
+                android:textSize="@dimen/table_title_size" />
         </TableRow>
 
         <TableRow
@@ -101,20 +110,22 @@
                 android:id="@+id/used_days"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:gravity="center"
-                android:textSize="@dimen/normal_font_size"
                 android:fontFamily="@font/notosanskr_regular"
-                android:text="@string/days" />
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:text="@string/days"
+                android:textSize="@dimen/normal_font_size" />
 
             <!-- blank month -->
             <TextView
                 android:id="@+id/left_days"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:gravity="center"
-                android:textSize="@dimen/normal_font_size"
                 android:fontFamily="@font/notosanskr_regular"
-                android:text="@string/days" />
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:text="@string/days"
+                android:textSize="@dimen/normal_font_size" />
 
 
         </TableRow>
@@ -123,47 +134,53 @@
         <TableRow
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:fontFamily="@font/notosanskr_black"
-                android:textSize="@dimen/table_title_size"
-                android:gravity="center"
                 android:background="@drawable/table_border"
-                android:text="@string/used_litters" />
+                android:fontFamily="@font/notosanskr_black"
+                android:gravity="center"
+                android:text="@string/used_litters"
+                android:textSize="@dimen/table_title_size" />
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:fontFamily="@font/notosanskr_black"
-                android:textSize="@dimen/table_title_size"
-                android:gravity="center"
                 android:background="@drawable/table_border"
-                android:text="@string/left_litters" />
+                android:fontFamily="@font/notosanskr_black"
+                android:gravity="center"
+                android:text="@string/left_litters"
+                android:textSize="@dimen/table_title_size" />
         </TableRow>
 
         <TableRow
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
+
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:textSize="@dimen/normal_font_size"
-                android:fontFamily="@font/notosanskr_regular"
                 android:id="@+id/used_litters"
-                android:text="@string/litter" />
-            <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:gravity="center"
-                android:id="@+id/left_litters"
-                android:textSize="@dimen/normal_font_size"
                 android:fontFamily="@font/notosanskr_regular"
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:text="@string/litter"
+                android:textSize="@dimen/normal_font_size" />
 
-                android:text="@string/litter" />
+            <TextView
+                android:id="@+id/left_litters"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/notosanskr_regular"
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:text="@string/litter"
+                android:textSize="@dimen/normal_font_size" />
         </TableRow>
 
 
     </TableLayout>
 
-</androidx.appcompat.widget.LinearLayoutCompat>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
