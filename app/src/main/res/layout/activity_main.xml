@@ -56,7 +56,8 @@
         android:layout_marginTop="15dp"
         android:layout_marginBottom="15dp"
         android:adjustViewBounds="true"
-        android:scaleType="fitCenter" />
+        android:scaleType="fitCenter"
+        android:src="@drawable/normal_water_flow"/>
 
     <!-- Used / Left days -->
     <TableLayout

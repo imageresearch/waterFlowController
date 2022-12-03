@@ -26,6 +26,7 @@ import android.bluetooth.le.ScanSettings;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.drawable.AnimationDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -61,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     List<BLEDeviceItem>         BLEDeviceItemList = new ArrayList<>();
-
+    AnimationDrawable           animationDrawable;
 
     /***************************************************************************
      * Request Bluetooth LE enabling
@@ -431,6 +432,12 @@ public class MainActivity extends AppCompatActivity {
         String merged_left_litters = String.format("%04d", left_flow_int) + litters;
         TextView left_litters_textview = findViewById(R.id.left_litters);
         left_litters_textview.setText(merged_left_litters);
+/*
+        ImageView imgView = (ImageView)findViewById(R.id.waterflow_status);
+        imgView.setImageDrawable(getResources().getDrawable(R.drawable.short_water_flow));
+        animationDrawable = (AnimationDrawable) imgView.getDrawable();
+        animationDrawable.start();*/
+
 
         if (left_days <= 0){
             TextView expectation_date_string_prefix_textview = findViewById(R.id.expectation_date_string_prefix);
@@ -440,12 +447,13 @@ public class MainActivity extends AppCompatActivity {
             String finish_string = getResources().getString(R.string.passed_expectation_days);
             expectation_date_string_prefix_textview.setText(first_string + " " +  day_string + finish_string);
             expected_date_view.setText(R.string.request_direct_change);
+/*
 
-            Glide
-            .with(this)
-            .load(R.drawable.short_water_flow)
-            .skipMemoryCache(true)
-            .into((ImageView)findViewById(R.id.waterflow_status));
+            ImageView imgView = (ImageView)findViewById(R.id.waterflow_status);
+            imgView.setImageDrawable(getResources().getDrawable(R.drawable.short_water_flow));
+            animationDrawable = (AnimationDrawable) imgView.getDrawable();
+            animationDrawable.start();
+*/
 
         }
 
@@ -455,11 +463,24 @@ public class MainActivity extends AppCompatActivity {
      *
      **************************************************************************/
     private void initializeContent(){
+/*
         Glide
         .with(this)
         .load(R.drawable.normal_water_flow)
         .skipMemoryCache(true)
         .into((ImageView)findViewById(R.id.waterflow_status));
+*/
+
+        ImageView imgView = (ImageView)findViewById(R.id.waterflow_status);
+        imgView.setImageDrawable(getResources().getDrawable(R.drawable.short_water_flow));
+        animationDrawable = (AnimationDrawable) imgView.getDrawable();
+        animationDrawable.start();
+/*
+
+        ImageView imgView = (ImageView)findViewById(R.id.waterflow_status);
+        animationDrawable = (AnimationDrawable) imgView.getDrawable();
+        animationDrawable.start();
+*/
     }
 
 
